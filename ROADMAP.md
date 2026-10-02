@@ -1,7 +1,7 @@
 # Roadmap · Objectif English
 
 Appli perso pour apprendre l'**anglais parlé du quotidien**, sur iPhone.
-Niveau de départ : débutant (A1-A2). Mise à jour : 2 octobre 2026.
+Niveau de départ : débutant (A1-A2). Mise à jour : 2 octobre 2026 (phase 1 livrée).
 
 **Notre façon d'avancer :** je code une étape, tu la testes sur ton iPhone pendant quelques jours, tu me dis ce qui coince, on ajuste, puis on passe à l'étape suivante.
 
@@ -19,19 +19,21 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 2 octobre 2026.
 
 ---
 
-## 🔜 Phase 1 · Plus de contenu (semaine du 5 octobre)
+## ✅ Phase 1 · Plus de contenu (terminée le 2 octobre)
 
 **Pourquoi :** au rythme d'une situation par jour, les 10 situations actuelles sont finies en 10 jours.
 
-- [ ] Organiser les situations en **chapitres** (ex. « La vie de tous les jours », « Sortir », « Discuter », « Au travail »)
-- [ ] **+20 situations**, chacune avec 8 phrases et un dialogue :
+- [x] Organiser les situations en **4 chapitres** : Les bases, Sortir et bouger, Discuter, Boulot et maison, avec un écran « Parcours »
+- [x] **+20 situations** (30 au total, 240 phrases), chacune avec 8 phrases et un dialogue :
   - La vie courante : transports, hôtel ou Airbnb, pharmacie, médecin, au téléphone, banque, livraison
   - La discussion : ton week-end, la météo, ton boulot, tes goûts, donner son avis, raconter une anecdote, faire un compliment
   - Les expressions courantes : « I'm beat », « Piece of cake », « Hang on », « Whatever », « I'm starving »…
-- [ ] Nouveaux personnages récurrents, et des anciens qui reviennent (Sam, Jake…)
+- [x] 8 nouveaux personnages (Marcus, Linda, Priya, Dr Ross, Tom, Nina, Diane, Tony), et des anciens qui reviennent (Sam, Chloe, Jake)
 - [ ] Des **situations sur mesure** selon tes besoins (voyage, travail, séries…) : à me lister
 
-**Terminé quand :** environ 30 situations, de quoi tenir un mois.
+**Terminé quand :** environ 30 situations, de quoi tenir un mois. ✓
+
+Reste ouvert : les situations sur mesure, dès que tu me donnes tes besoins.
 
 ---
 

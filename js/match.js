@@ -4,11 +4,11 @@
 const WORDS = {
   gonna: "going to", wanna: "want to", gotta: "got to", kinda: "kind of", ya: "you",
   cuz: "because", yeah: "yes", yep: "yes", yup: "yes", nah: "no", nope: "no",
-  ok: "okay", alright: "all right", "d'you": "do you",
+  alright: "all right", "d'you": "do you",
   "can't": "can not", cant: "can not", cannot: "can not", "won't": "will not", "ain't": "is not",
   "let's": "let us", whats: "what is", thats: "that is", dont: "do not", im: "i am",
   "i'm": "i am", wassup: "what is up", whassup: "what is up", sup: "what is up",
-  goin: "going", nothin: "nothing", gimme: "give me", lemme: "let me",
+  goin: "going", wifi: "wi fi", checkout: "check out", checkin: "check in", okay: "ok", nothin: "nothing", gimme: "give me", lemme: "let me", lets: "let us",
 };
 const NUMBERS = [
   "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",

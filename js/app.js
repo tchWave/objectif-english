@@ -1,4 +1,4 @@
-import { SITUATIONS, CHARACTERS, getSituation, getPhrase, phraseId } from "./data.js";
+import { SITUATIONS, CHARACTERS, CHAPTERS, getChapter, getSituation, getPhrase, phraseId } from "./data.js";
 import { compare, bestMatch } from "./match.js";
 import * as speech from "./speech.js";
 import * as store from "./store.js";
@@ -55,7 +55,7 @@ function go(v) {
 
 function render() {
   const screens = {
-    home: renderHome, phrases: renderPhrases, thread: renderThread,
+    home: renderHome, path: renderPath, phrases: renderPhrases, thread: renderThread,
     session: renderSession, practice: renderPractice, settings: renderSettings,
   };
   app.innerHTML = screens[view.name]();
@@ -69,12 +69,37 @@ function avatar(charId, size = 44) {
 
 const isLearned = (sitId) => !!(state.situations[sitId] && state.situations[sitId].learned);
 const nextSituation = () => SITUATIONS.find((s) => !isLearned(s.id));
+const chapterSits = (chId) => SITUATIONS.filter((s) => s.chapter === chId);
+const chapterDone = (chId) => chapterSits(chId).filter((s) => isLearned(s.id)).length;
+
+function currentChapter() {
+  const next = nextSituation();
+  return next ? getChapter(next.chapter) : CHAPTERS[CHAPTERS.length - 1];
+}
+
+function chapterCard() {
+  const ch = currentChapter();
+  const total = chapterSits(ch.id).length;
+  const done = chapterDone(ch.id);
+  return `
+  <button class="chapter-card" data-a="path">
+    <span class="chapter-emoji">${ch.emoji}</span>
+    <div class="grow">
+      <div class="muted small">Chapitre ${CHAPTERS.indexOf(ch) + 1} sur ${CHAPTERS.length}</div>
+      <b>${esc(ch.title)}</b>
+      <div class="bar"><div style="width:${Math.round((done / total) * 100)}%"></div></div>
+    </div>
+    <span class="chapter-count">${done}/${total}</span>
+    <span class="chev">›</span>
+  </button>`;
+}
 
 function tabbar(active) {
   const due = store.dueIds(state).length;
   return `
   <nav class="tabbar">
     <button class="${active === "home" ? "on" : ""}" data-a="home"><span class="tab-ico">💬</span>Messages</button>
+    <button class="${active === "path" ? "on" : ""}" data-a="path"><span class="tab-ico">🗺️</span>Parcours</button>
     <button class="${active === "phrases" ? "on" : ""}" data-a="phrases"><span class="tab-ico">📚</span>Mes phrases${due ? `<span class="dot-badge">${due}</span>` : ""}</button>
     <button class="${active === "settings" ? "on" : ""}" data-a="settings"><span class="tab-ico">⚙️</span>Réglages</button>
   </nav>`;
@@ -131,6 +156,8 @@ function renderHome() {
       </div>
       <button class="btn3d white" data-a="start">${done ? "Encore une" : "C'est parti"}</button>
     </section>
+
+    ${chapterCard()}
 
     <div class="threads">
       ${rows}
@@ -193,11 +220,61 @@ function chatHeader(cid, back, backId) {
   </header>`;
 }
 
+// ---------- Parcours ----------
+function renderPath() {
+  const next = nextSituation();
+  const learned = SITUATIONS.filter((s) => isLearned(s.id)).length;
+  const chapters = CHAPTERS.map((ch, i) => {
+    const sits = chapterSits(ch.id);
+    const done = chapterDone(ch.id);
+    const status = done === sits.length ? "done" : done || sits.includes(next) ? "current" : "locked";
+    const rows = sits.map((s) => {
+      const c = CHARACTERS[s.char];
+      if (isLearned(s.id)) {
+        return `<button class="path-row done" data-a="phrases" data-id="${s.id}" data-from="path">
+          <span class="node">✓</span>
+          <div class="grow"><b>${s.emoji} ${esc(s.title)}</b><div class="muted small">avec ${esc(c.name)}</div></div>
+          <span class="chev">›</span>
+        </button>`;
+      }
+      if (s === next) {
+        return `<button class="path-row next" data-a="start">
+          <span class="node">${s.emoji}</span>
+          <div class="grow"><b>${esc(s.title)}</b><div class="small">${esc(c.name)} t'attend</div></div>
+          <span class="go">Go</span>
+        </button>`;
+      }
+      return `<div class="path-row locked">
+        <span class="node">🔒</span>
+        <div class="grow"><b>${esc(s.title)}</b><div class="muted small">avec ${esc(c.name)}</div></div>
+      </div>`;
+    }).join("");
+    return `
+    <section class="chapter ${status}">
+      <div class="chapter-head">
+        <span class="chapter-emoji">${ch.emoji}</span>
+        <div class="grow"><div class="muted small">Chapitre ${i + 1} · ${esc(ch.desc)}</div><h3>${esc(ch.title)}</h3></div>
+        <span class="chapter-count">${status === "done" ? "🏆" : `${done}/${sits.length}`}</span>
+      </div>
+      <div class="path-list">${rows}</div>
+    </section>`;
+  }).join("");
+
+  return `
+  <div class="screen">
+    <header class="home-head">
+      <div><div class="muted small">${learned} situations sur ${SITUATIONS.length}</div><h1>Parcours</h1></div>
+    </header>
+    ${chapters}
+    ${tabbar("path")}
+  </div>`;
+}
+
 // ---------- Mes phrases ----------
 function renderPhrases() {
   const due = store.dueIds(state).length;
   const sits = SITUATIONS.filter((s) => (view.sit ? s.id === view.sit : s.phrases.some((_, i) => state.cards[phraseId(s.id, i)])));
-  const groups = sits.map((s) => `
+  const group = (s) => `
     <h3 class="group-title">${s.emoji} ${esc(s.title)}</h3>
     <div class="list">
       ${s.phrases.map((p, i) => {
@@ -208,12 +285,17 @@ function renderPhrases() {
           <div class="level" title="Niveau">${[1, 2, 3].map((n) => `<i class="${n <= level ? "on" : ""}"></i>`).join("")}</div>
         </button>`;
       }).join("")}
-    </div>`).join("");
+    </div>`;
+  const groups = CHAPTERS.map((ch) => {
+    const cs = sits.filter((s) => s.chapter === ch.id);
+    if (!cs.length) return "";
+    return (view.sit ? "" : `<h2 class="chapter-title">${ch.emoji} ${esc(ch.title)}</h2>`) + cs.map(group).join("");
+  }).join("");
 
   return `
   <div class="screen">
     <header class="home-head">
-      ${view.sit ? `<button class="icon" data-a="thread" data-id="${getSituation(view.sit).char}" aria-label="Retour">‹</button>` : ""}
+      ${view.sit ? `<button class="icon" data-a="${view.from === "path" ? "path" : "thread"}" data-id="${getSituation(view.sit).char}" aria-label="Retour">‹</button>` : ""}
       <div class="grow"><h1>${view.sit ? esc(getSituation(view.sit).title) : "Mes phrases"}</h1></div>
     </header>
     ${view.sit ? "" : `
@@ -275,7 +357,10 @@ function nextStep() {
   }
   if (st.type === "dialogue") {
     const s = state.situations[st.sit] || (state.situations[st.sit] = {});
+    const wasLearned = s.learned;
     s.learned = true;
+    const ch = getSituation(st.sit).chapter;
+    if (!wasLearned && chapterDone(ch) === chapterSits(ch).length) view.stats.chapterDone = ch;
     s.dialogues = (s.dialogues || 0) + 1;
     view.stats.dialogues++;
   }
@@ -402,6 +487,7 @@ function renderEnd() {
       <div class="end-flame">🔥</div>
       <div class="end-streak">${plural(streak, "jour")} d'affilée</div>
       <h1>Séance terminée !</h1>
+      ${s.chapterDone ? chapterDoneBanner(s.chapterDone) : ""}
       <div class="end-stats">
         ${s.learned ? `<div class="stat"><b>${s.learned}</b><span>nouvelles phrases</span></div>` : ""}
         ${s.reviewed ? `<div class="stat"><b>${s.ok}/${s.reviewed}</b><span>révisions réussies</span></div>` : ""}
@@ -411,6 +497,13 @@ function renderEnd() {
     </div>
     <div class="bottom-bar"><button class="btn3d wide" data-a="home">Retour aux messages</button></div>
   </div>`;
+}
+
+function chapterDoneBanner(chId) {
+  const ch = getChapter(chId);
+  const nextCh = CHAPTERS[CHAPTERS.indexOf(ch) + 1];
+  const after = nextCh ? `Prochain : ${nextCh.emoji} ${esc(nextCh.title)}` : "Tu as fini tout le parcours, bravo !";
+  return `<div class="chapter-done">🏆 Chapitre « ${esc(ch.title)} » terminé !<div class="small">${after}</div></div>`;
 }
 
 function confetti() {
@@ -682,7 +775,8 @@ function handleAnswer(text) {
 const actions = {
   noop: () => {},
   home: () => go({ name: "home" }),
-  phrases: (d) => go({ name: "phrases", sit: d.id || null }),
+  phrases: (d) => go({ name: "phrases", sit: d.id || null, from: d.from || null }),
+  path: () => go({ name: "path" }),
   settings: () => go({ name: "settings" }),
   thread: (d) => go({ name: "thread", char: d.id }),
   practice: (d) => startPractice(d.id),

@@ -4,6 +4,8 @@
 //             { you, free: true, examples[] } = réponse libre.
 
 // Les personnages qu'on retrouve dans la messagerie. color = teinte de l'avatar.
+import { MORE_CHARACTERS, MORE_SITUATIONS } from "./situations-more.js";
+
 export const CHARACTERS = {
   jake: { name: "Jake", role: "Ton collègue", emoji: "💼", color: "#4C7DFF" },
   leo: { name: "Leo", role: "Un inconnu pressé", emoji: "🏃", color: "#FF8A3D" },
@@ -12,9 +14,10 @@ export const CHARACTERS = {
   mia: { name: "Mia", role: "Barista", emoji: "☕", color: "#B7794B" },
   emma: { name: "Emma", role: "Vendeuse", emoji: "🛍️", color: "#14B8A6" },
   rosa: { name: "Rosa", role: "Une passante", emoji: "🗺️", color: "#22A06B" },
+  ...MORE_CHARACTERS,
 };
 
-export const SITUATIONS = [
+const BASE_SITUATIONS = [
   {
     id: "greetings",
     char: "jake",
@@ -310,6 +313,27 @@ export const SITUATIONS = [
     },
   },
 ];
+
+// Les chapitres, dans l'ordre où on les débloque. Ne pas renommer les ids : la progression y est liée.
+export const CHAPTERS = [
+  { id: "bases", emoji: "🌱", title: "Les bases", desc: "Saluer, comprendre, réagir",
+    ids: ["greetings", "understand", "reactions", "meeting", "coffee", "directions", "shopping"] },
+  { id: "sortir", emoji: "🚕", title: "Sortir et bouger", desc: "Restos, transports, santé",
+    ids: ["plans", "restaurant", "bar", "transport", "hotel", "phone", "pharmacy", "doctor"] },
+  { id: "discuter", emoji: "💬", title: "Discuter", desc: "Raconter, donner son avis",
+    ids: ["weekend", "weather", "hobbies", "opinions", "anecdote", "feelings", "compliments", "jobtalk"] },
+  { id: "boulot", emoji: "🏠", title: "Boulot et maison", desc: "Collègues, coloc, livraisons",
+    ids: ["work", "lunch", "videocall", "swamped", "delivery", "chores", "slang"] },
+];
+
+const ALL = [...BASE_SITUATIONS, ...MORE_SITUATIONS];
+export const SITUATIONS = CHAPTERS.flatMap((ch) =>
+  ch.ids.map((id) => ({ ...ALL.find((s) => s.id === id), chapter: ch.id }))
+);
+
+export function getChapter(id) {
+  return CHAPTERS.find((c) => c.id === id);
+}
 
 export function getSituation(id) {
   return SITUATIONS.find((s) => s.id === id);
