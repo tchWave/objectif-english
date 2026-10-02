@@ -3,9 +3,21 @@
 //             { you, answers[] } = consigne en français + réponses acceptées (la première sert de modèle) ;
 //             { you, free: true, examples[] } = réponse libre.
 
+// Les personnages qu'on retrouve dans la messagerie. color = teinte de l'avatar.
+export const CHARACTERS = {
+  jake: { name: "Jake", role: "Ton collègue", emoji: "💼", color: "#4C7DFF" },
+  leo: { name: "Leo", role: "Un inconnu pressé", emoji: "🏃", color: "#FF8A3D" },
+  sam: { name: "Sam", role: "Ton pote", emoji: "🍻", color: "#8B5CF6" },
+  chloe: { name: "Chloe", role: "Rencontrée en soirée", emoji: "🎉", color: "#EC4899" },
+  mia: { name: "Mia", role: "Barista", emoji: "☕", color: "#B7794B" },
+  emma: { name: "Emma", role: "Vendeuse", emoji: "🛍️", color: "#14B8A6" },
+  rosa: { name: "Rosa", role: "Une passante", emoji: "🗺️", color: "#22A06B" },
+};
+
 export const SITUATIONS = [
   {
     id: "greetings",
+    char: "jake",
     emoji: "👋",
     title: "Se saluer",
     intro: "« How are you? » ou « What's up? » ne sont pas de vraies questions : on répond en deux mots et on renvoie la question. Personne n'attend que tu racontes ta journée.",
@@ -33,6 +45,7 @@ export const SITUATIONS = [
   },
   {
     id: "understand",
+    char: "leo",
     emoji: "🤔",
     title: "Faire répéter",
     intro: "La phrase la plus utile quand on débute : dire qu'on n'a pas compris. Les natifs parlent vite et avalent les mots, c'est normal de demander.",
@@ -61,6 +74,7 @@ export const SITUATIONS = [
   },
   {
     id: "reactions",
+    char: "sam",
     emoji: "💬",
     title: "Réagir",
     intro: "Merci, pardon, la surprise… Ces petits mots reviennent dans toutes les conversations. Les placer au bon moment, c'est ce qui fait sonner « naturel ».",
@@ -90,6 +104,7 @@ export const SITUATIONS = [
   },
   {
     id: "meeting",
+    char: "chloe",
     emoji: "🙂",
     title: "Faire connaissance",
     intro: "Pour se présenter, on reste simple : « Hi, I'm Alex » (presque jamais « My name is… »). Et on pose vite une question à l'autre.",
@@ -106,7 +121,7 @@ export const SITUATIONS = [
     dialogue: {
       title: "Soirée chez des amis",
       turns: [
-        { them: "Hey, I'm Sam. I don't think we've met.", fr: "Salut, moi c'est Sam. Je crois qu'on ne se connaît pas." },
+        { them: "Hey, I'm Chloe. I don't think we've met.", fr: "Salut, moi c'est Chloe. Je crois qu'on ne se connaît pas." },
         { you: "Dis enchanté, et que tu viens de France.", answers: ["Nice to meet you, I'm from France.", "Hi, nice to meet you! I'm from France."] },
         { them: "Oh cool! How long have you been here?", fr: "Oh cool ! Tu es là depuis combien de temps ?" },
         { you: "Réponds : juste quelques jours. Puis demande-lui s'il habite dans le coin.", answers: ["Just a few days. Do you live around here?", "Just for a few days. Do you live around here?"] },
@@ -118,6 +133,7 @@ export const SITUATIONS = [
   },
   {
     id: "coffee",
+    char: "mia",
     emoji: "☕",
     title: "Au café",
     intro: "Pour commander, oublie « I would like ». Dans la vraie vie, on dit « Can I get… ? » ou « I'll have… ». C'est direct, et c'est poli.",
@@ -148,6 +164,7 @@ export const SITUATIONS = [
   },
   {
     id: "plans",
+    char: "sam",
     emoji: "📱",
     title: "Faire des plans",
     intro: "Pour proposer une sortie, tout est raccourci : « Wanna…? » = « Do you want to…? ». Tu l'entendras partout, à l'oral comme par texto.",
@@ -176,6 +193,7 @@ export const SITUATIONS = [
   },
   {
     id: "restaurant",
+    char: "sam",
     emoji: "🍻",
     title: "Au resto, au bar",
     intro: "Aux États-Unis, le serveur passe souvent demander si tout va bien. L'addition se dit « the check » (US) ou « the bill » (UK).",
@@ -205,6 +223,7 @@ export const SITUATIONS = [
   },
   {
     id: "shopping",
+    char: "emma",
     emoji: "🛍️",
     title: "En magasin",
     intro: "En boutique, les vendeurs viennent souvent te parler. « I'm just looking » est la phrase magique pour être tranquille.",
@@ -234,6 +253,7 @@ export const SITUATIONS = [
   },
   {
     id: "directions",
+    char: "rosa",
     emoji: "🗺️",
     title: "Demander son chemin",
     intro: "Les réponses sont souvent approximatives : « like five minutes », « just down the street ». À l'oral, « like » est partout et veut souvent dire « environ ».",
@@ -261,6 +281,7 @@ export const SITUATIONS = [
   },
   {
     id: "work",
+    char: "jake",
     emoji: "💼",
     title: "Au boulot",
     intro: "Entre collègues anglophones, le ton est souvent détendu, même avec le chef. Les phrases courtes passent très bien.",

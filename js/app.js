@@ -1,15 +1,16 @@
-import { SITUATIONS, getSituation, getPhrase, phraseId } from "./data.js";
+import { SITUATIONS, CHARACTERS, getSituation, getPhrase, phraseId } from "./data.js";
 import { compare, bestMatch } from "./match.js";
 import * as speech from "./speech.js";
 import * as store from "./store.js";
+import * as sfx from "./sfx.js";
 
 const PASS = 0.8;
 const DIALOG_PASS = 0.7;
 const MAX_REVIEWS = 12;
-const PRAISE = ["Parfait !", "Nickel !", "Super !", "Bien joué !", "Excellent !"];
+const PRAISE = ["Nickel !", "Parfait !", "Bien joué !", "Excellent !", "Trop fort !", "Yes !"];
 const MIC_ERRORS = {
   "not-allowed": "Accès au micro refusé. Autorise le micro et la reconnaissance vocale dans Réglages.",
-  "service-not-allowed": "Reconnaissance vocale indisponible. Vérifie que Siri et Dictée sont activés dans Réglages.",
+  "service-not-allowed": "Reconnaissance vocale indisponible. Vérifie que Siri et Dictée sont activés.",
   "network": "Problème réseau pendant l'écoute. Réessaie ou utilise le clavier.",
   "audio-capture": "Aucun micro détecté.",
   "start-failed": "Le micro n'a pas pu démarrer. Réessaie.",
@@ -24,6 +25,7 @@ let listener = null;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const save = () => store.save(state);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const plural = (n, word) => `${n} ${word}${n > 1 ? "s" : ""}`;
 const say = (text, slow) =>
   speech.speak(text, { rate: state.settings.rate * (slow ? 0.75 : 1), voiceURI: state.settings.voice });
 
@@ -31,7 +33,7 @@ function newStepState() {
   return {
     listening: false, interim: "", error: null, keyboard: false,
     result: null, hint: false, recorded: false,
-    turn: 0, log: [], playing: false, help: false, done: false,
+    turn: 0, log: [], playing: false, help: false, done: false, seen: 0, shown: false,
   };
 }
 
@@ -52,56 +54,178 @@ function go(v) {
 }
 
 function render() {
-  const screens = { home: renderHome, session: renderSession, situation: renderSituation, practice: renderPractice, settings: renderSettings };
+  const screens = {
+    home: renderHome, phrases: renderPhrases, thread: renderThread,
+    session: renderSession, practice: renderPractice, settings: renderSettings,
+  };
   app.innerHTML = screens[view.name]();
 }
 
-// ---------- Accueil ----------
-function nextSituation() {
-  return SITUATIONS.find((s) => !(state.situations[s.id] && state.situations[s.id].learned));
+function avatar(charId, size = 44) {
+  const c = CHARACTERS[charId];
+  return `<div class="avatar" style="--c:${c.color};width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px">
+    ${esc(c.name[0])}<span class="avatar-badge" style="font-size:${Math.round(size * 0.3)}px">${c.emoji}</span></div>`;
 }
 
+const isLearned = (sitId) => !!(state.situations[sitId] && state.situations[sitId].learned);
+const nextSituation = () => SITUATIONS.find((s) => !isLearned(s.id));
+
+function tabbar(active) {
+  const due = store.dueIds(state).length;
+  return `
+  <nav class="tabbar">
+    <button class="${active === "home" ? "on" : ""}" data-a="home"><span class="tab-ico">💬</span>Messages</button>
+    <button class="${active === "phrases" ? "on" : ""}" data-a="phrases"><span class="tab-ico">📚</span>Mes phrases${due ? `<span class="dot-badge">${due}</span>` : ""}</button>
+    <button class="${active === "settings" ? "on" : ""}" data-a="settings"><span class="tab-ico">⚙️</span>Réglages</button>
+  </nav>`;
+}
+
+// ---------- Accueil : la messagerie ----------
 function renderHome() {
   const due = store.dueIds(state).length;
-  const learned = Object.keys(state.cards).length;
   const streak = store.streak(state);
   const next = nextSituation();
-  const plan = [
-    due ? `${Math.min(due, MAX_REVIEWS)} révision${due > 1 ? "s" : ""}` : null,
-    next ? `Nouveau : ${next.emoji} ${next.title}` : "Dialogue d'entraînement",
-  ].filter(Boolean).join(" · ");
+  const done = store.doneToday(state);
+  const plan = [due ? plural(Math.min(due, MAX_REVIEWS), "révision") : null, next ? `${CHARACTERS[next.char].name} t'attend` : "un dialogue bonus"]
+    .filter(Boolean).join(" · ");
+
+  // Une ligne par personnage déjà rencontré (ou qui écrit le prochain message).
+  const order = [];
+  SITUATIONS.forEach((s) => {
+    if ((isLearned(s.id) || s === next) && !order.includes(s.char)) order.push(s.char);
+  });
+  order.sort((a, b) => (next && b === next.char) - (next && a === next.char));
+  const locked = new Set(SITUATIONS.filter((s) => !isLearned(s.id) && s !== next).map((s) => s.char).filter((c) => !order.includes(c))).size;
+
+  const rows = order.map((cid) => {
+    const c = CHARACTERS[cid];
+    const unread = next && next.char === cid;
+    const sits = SITUATIONS.filter((s) => s.char === cid && isLearned(s.id));
+    const last = sits[sits.length - 1];
+    const preview = unread ? next.dialogue.turns.find((t) => t.them)?.them || next.title : lastLine(last);
+    return `
+    <button class="thread-row ${unread ? "unread" : ""}" data-a="thread" data-id="${cid}">
+      ${avatar(cid, 52)}
+      <div class="grow">
+        <div class="thread-top"><b>${esc(c.name)}</b><span class="muted small">${unread ? "Nouveau" : esc(last ? last.title : "")}</span></div>
+        <div class="thread-preview">${esc(preview)}</div>
+      </div>
+      ${unread ? '<span class="unread-dot"></span>' : ""}
+    </button>`;
+  }).join("");
 
   return `
-  <header class="top">
-    <div>
-      <h1>Objectif English</h1>
-      <p class="sub">L'anglais qu'on parle vraiment</p>
+  <div class="screen">
+    <header class="home-head">
+      <div>
+        <div class="muted small">Objectif English</div>
+        <h1>Messages</h1>
+      </div>
+      <div class="streak-pill ${streak ? "" : "cold"}">🔥 ${streak}</div>
+    </header>
+
+    <section class="daily ${done ? "is-done" : ""}">
+      <div class="daily-text">
+        <div class="daily-kicker">${done ? "Séance du jour faite ✓" : "Séance du jour · 10 min"}</div>
+        <div class="daily-title">${done ? "Bravo, à demain !" : esc(plan)}</div>
+      </div>
+      <button class="btn3d white" data-a="start">${done ? "Encore une" : "C'est parti"}</button>
+    </section>
+
+    <div class="threads">
+      ${rows}
+      ${locked ? `<div class="thread-row locked"><div class="avatar ghost" style="width:52px;height:52px">🔒</div>
+        <div class="grow"><b>${plural(locked, "contact")} à débloquer</b><div class="thread-preview">Un nouveau personnage à chaque situation terminée</div></div></div>` : ""}
     </div>
-    <button class="icon" data-a="settings" aria-label="Réglages">⚙️</button>
-  </header>
+    ${tabbar("home")}
+  </div>`;
+}
 
-  <section class="stats">
-    <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">jour${streak > 1 ? "s" : ""} d'affilée</div></div>
-    <div class="stat"><div class="num">${learned}</div><div class="lbl">phrases vues</div></div>
-    <div class="stat"><div class="num">${store.masteredCount(state)}</div><div class="lbl">maîtrisées</div></div>
-  </section>
+function lastLine(sit) {
+  if (!sit) return "";
+  const turns = sit.dialogue.turns;
+  const t = turns[turns.length - 1];
+  return t.them ? t.them : "Toi : " + (t.free ? t.examples[0] : t.answers[0]);
+}
 
-  <section class="card cta">
-    <h2>${store.doneToday(state) ? "Séance du jour faite ✓" : "Séance du jour"}</h2>
-    <p class="muted">${esc(plan)}</p>
-    <button class="primary wide" data-a="start">${store.doneToday(state) ? "En refaire une" : "Commencer"}</button>
-  </section>
+// ---------- Fil de discussion d'un personnage ----------
+function renderThread() {
+  const cid = view.char;
+  const c = CHARACTERS[cid];
+  const next = nextSituation();
+  const sits = SITUATIONS.filter((s) => s.char === cid && isLearned(s.id));
+  const history = sits.map((s) => `
+    <div class="divider"><span>${s.emoji} ${esc(s.title)}</span></div>
+    ${s.dialogue.turns.map((t) => t.them
+      ? `<div class="bubble them" data-a="say" data-text="${esc(t.them)}">${t.who ? `<div class="who">${esc(t.who)}</div>` : ""}${esc(t.them)}</div>`
+      : `<div class="bubble you">${esc(t.free ? t.examples[0] : t.answers[0])}</div>`).join("")}
+    <div class="episode-actions">
+      <button class="chip" data-a="practice" data-id="${s.id}">🎬 Rejouer</button>
+      <button class="chip" data-a="phrases" data-id="${s.id}">📚 Les phrases</button>
+    </div>`).join("");
 
-  <h3 class="section-title">Situations</h3>
-  <section class="list">
-    ${SITUATIONS.map((s) => {
-      const st = state.situations[s.id];
-      const badge = st && st.learned ? '<span class="badge ok">✓</span>' : s === next ? '<span class="badge next">Prochaine</span>' : "";
-      return `<button class="list-item" data-a="situation" data-id="${s.id}">
-        <span class="emoji">${s.emoji}</span><span class="grow">${esc(s.title)}</span>${badge}<span class="chev">›</span>
-      </button>`;
-    }).join("")}
-  </section>`;
+  let pending = "";
+  if (next && next.char === cid) {
+    const first = next.dialogue.turns.find((t) => t.them);
+    pending = `
+    <div class="divider new"><span>Nouveau · ${next.emoji} ${esc(next.title)}</span></div>
+    ${first ? `<div class="bubble them" data-a="say" data-text="${esc(first.them)}">${esc(first.them)}</div>` : `<div class="bubble them muted">${esc(next.dialogue.title)}</div>`}
+    <div class="reply-cta">
+      <p class="muted small">Avant de répondre, apprends ${next.phrases.length} phrases utiles.</p>
+      <button class="btn3d" data-a="start">Répondre</button>
+    </div>`;
+  }
+
+  return `
+  <div class="screen chat-screen">
+    ${chatHeader(cid, "home")}
+    <div class="chat">${history}${pending}</div>
+  </div>`;
+}
+
+function chatHeader(cid, back, backId) {
+  const c = CHARACTERS[cid];
+  return `
+  <header class="chat-head">
+    ${back ? `<button class="icon" data-a="${back}" ${backId ? `data-id="${backId}"` : ""} aria-label="Retour">‹</button>` : ""}
+    ${avatar(cid, 38)}
+    <div class="grow"><b>${esc(c.name)}</b><div class="muted small">${esc(c.role)}</div></div>
+  </header>`;
+}
+
+// ---------- Mes phrases ----------
+function renderPhrases() {
+  const due = store.dueIds(state).length;
+  const sits = SITUATIONS.filter((s) => (view.sit ? s.id === view.sit : s.phrases.some((_, i) => state.cards[phraseId(s.id, i)])));
+  const groups = sits.map((s) => `
+    <h3 class="group-title">${s.emoji} ${esc(s.title)}</h3>
+    <div class="list">
+      ${s.phrases.map((p, i) => {
+        const card = state.cards[phraseId(s.id, i)];
+        const level = card ? Math.min(3, Math.ceil(card.box / 2)) : 0;
+        return `<button class="phrase-row" data-a="say" data-text="${esc(p.en)}">
+          <div class="grow"><b>${esc(p.en)}</b><div class="muted small">${esc(p.fr)}</div></div>
+          <div class="level" title="Niveau">${[1, 2, 3].map((n) => `<i class="${n <= level ? "on" : ""}"></i>`).join("")}</div>
+        </button>`;
+      }).join("")}
+    </div>`).join("");
+
+  return `
+  <div class="screen">
+    <header class="home-head">
+      ${view.sit ? `<button class="icon" data-a="thread" data-id="${getSituation(view.sit).char}" aria-label="Retour">‹</button>` : ""}
+      <div class="grow"><h1>${view.sit ? esc(getSituation(view.sit).title) : "Mes phrases"}</h1></div>
+    </header>
+    ${view.sit ? "" : `
+    <section class="stats">
+      <div class="stat"><b>${Object.keys(state.cards).length}</b><span>vues</span></div>
+      <div class="stat"><b>${store.masteredCount(state)}</b><span>maîtrisées</span></div>
+      <div class="stat"><b>${due}</b><span>à réviser</span></div>
+    </section>`}
+    ${groups || `<div class="empty">Tes phrases apparaîtront ici après ta première séance.<button class="btn3d" data-a="start">Commencer</button></div>`}
+    <p class="muted small center">Touche une phrase pour l'écouter. Les barres montrent ton niveau.</p>
+    ${view.sit ? "" : tabbar("phrases")}
+  </div>`;
 }
 
 // ---------- Séance ----------
@@ -123,9 +247,7 @@ function buildSession() {
   return steps;
 }
 
-function currentStep() {
-  return view.name === "session" ? view.steps[view.i] : null;
-}
+const currentStep = () => (view.name === "session" ? view.steps[view.i] : null);
 
 function startSession() {
   go({ name: "session", steps: buildSession(), i: 0, ss: newStepState(), stats: { reviewed: 0, ok: 0, learned: 0, dialogues: 0 } });
@@ -137,6 +259,7 @@ function onEnterStep() {
   if (!st) return;
   if (st.type === "learn" && state.settings.autoplay) say(getPhrase(st.id).en);
   if (st.type === "dialogue") playThem();
+  if (st.type === "end") { sfx.done(); confetti(); }
 }
 
 function nextStep() {
@@ -166,31 +289,38 @@ function nextStep() {
   onEnterStep();
 }
 
-function renderSession() {
-  const st = currentStep();
+function sessionTop(dark) {
   const pct = Math.round((view.i / (view.steps.length - 1)) * 100);
-  let body = "";
-  if (st.type === "intro") body = renderIntro(getSituation(st.sit));
-  else if (st.type === "learn" || st.type === "review") body = renderCard(st);
-  else if (st.type === "dialogue") body = renderDialogue(getSituation(st.sit), view.ss, true);
-  else body = renderEnd();
   return `
-  <div class="topbar">
+  <div class="session-top ${dark ? "on-dark" : ""}">
     <button class="icon" data-a="home" aria-label="Quitter">✕</button>
     <div class="progress"><div style="width:${pct}%"></div></div>
-  </div>
-  ${body}`;
+    <span class="streak-mini">🔥 ${store.streak(state)}</span>
+  </div>`;
+}
+
+function renderSession() {
+  const st = currentStep();
+  if (st.type === "intro") return renderIntro(getSituation(st.sit));
+  if (st.type === "learn" || st.type === "review") return renderCard(st);
+  if (st.type === "dialogue") return renderDialogue(getSituation(st.sit), view.ss, true);
+  return renderEnd();
 }
 
 function renderIntro(sit) {
+  const c = CHARACTERS[sit.char];
+  const first = sit.dialogue.turns.find((t) => t.them);
   return `
-  <section class="card intro">
-    <div class="big-emoji">${sit.emoji}</div>
-    <h2>${esc(sit.title)}</h2>
-    <p>${esc(sit.intro)}</p>
-    <p class="muted">${sit.phrases.length} phrases à découvrir, puis un mini-dialogue.</p>
-  </section>
-  <div class="bottom"><button class="primary wide" data-a="next">C'est parti</button></div>`;
+  <div class="screen intro-screen">
+    ${sessionTop(false)}
+    <div class="intro-body">
+      ${avatar(sit.char, 96)}
+      <div class="intro-kicker">${esc(c.name)} · ${esc(c.role)}</div>
+      ${first ? `<div class="bubble them big" data-a="say" data-text="${esc(first.them)}">${esc(first.them)}</div>` : `<h2>${esc(sit.dialogue.title)}</h2>`}
+      <div class="tip"><b>${sit.emoji} ${esc(sit.title)}</b><p>${esc(sit.intro)}</p></div>
+    </div>
+    <div class="bottom-bar"><button class="btn3d wide" data-a="next">Apprendre les ${sit.phrases.length} phrases</button></div>
+  </div>`;
 }
 
 function wordsHtml(words) {
@@ -202,42 +332,64 @@ function renderCard(st) {
   const ss = view.ss;
   const review = st.type === "review";
   const reveal = !review || ss.hint || ss.result;
-  let feedback = "";
-  if (ss.result) {
-    const sc = ss.result.score;
-    const cls = sc >= PASS ? "ok" : sc >= 0.5 ? "mid" : "ko";
-    const msg = sc >= PASS ? pick(PRAISE) : sc >= 0.5 ? "Presque ! Retravaille les mots en rouge." : "Pas encore. Réécoute et réessaie.";
-    feedback = `<div class="feedback ${cls}">${msg}<div class="heard">Entendu : « ${esc(ss.result.heard)} »</div></div>`;
-  }
+  const anim = !ss.shown;
+  ss.shown = true;
   return `
-  <div class="step-label">${review ? "Révision" : "Nouvelle phrase"} · ${p.sit.emoji} ${esc(p.sit.title)}</div>
-  <section class="card phrase">
-    <div class="fr">${esc(p.fr)}</div>
-    ${reveal
-      ? `<div class="en">${ss.result ? wordsHtml(ss.result.words) : esc(p.en)}</div>`
-      : `<div class="en hidden-en">Comment on le dit en anglais ?</div>`}
-    ${reveal && p.sounds ? `<div class="sounds">🗣️ À l'oral, ça sonne : « ${esc(p.sounds)} »</div>` : ""}
-    ${reveal && p.note ? `<div class="note">💡 ${esc(p.note)}</div>` : ""}
-    <div class="row">
+  <div class="screen dark card-screen">
+    ${sessionTop(true)}
+    <div class="card-tag">${review ? "Révision" : "Nouvelle phrase"} · ${p.sit.emoji} ${esc(p.sit.title)}</div>
+    <div class="card-body ${anim ? "anim" : ""}">
+      <div class="card-fr">${esc(p.fr)}</div>
       ${reveal
-        ? `<button data-a="say" data-text="${esc(p.en)}">🔊 Écouter</button><button data-a="say" data-slow="1" data-text="${esc(p.en)}">🐢 Lentement</button>`
-        : `<button data-a="hint">💡 Je ne sais pas, écouter</button>`}
+        ? `<div class="card-en">${ss.result ? wordsHtml(ss.result.words) : esc(p.en)}</div>`
+        : `<div class="card-en hidden">Dis-le en anglais</div>`}
+      ${reveal && p.sounds ? `<div class="card-sounds">🗣️ ça sonne « ${esc(p.sounds)} »</div>` : ""}
+      ${reveal && p.note ? `<div class="card-note">💡 ${esc(p.note)}</div>` : ""}
     </div>
-  </section>
-  ${micBlock()}
-  ${feedback}
-  <div class="bottom"><button class="${ss.result ? "primary" : ""} wide" data-a="next">${ss.result ? "Suivant" : "Passer"}</button></div>`;
+    ${micPanel(reveal ? p.en : null)}
+    ${ss.result ? cardSheet(ss) : ""}
+  </div>`;
 }
 
-function micBlock() {
+// Panneau micro : onde sonore + boutons écouter / parler / lentement.
+function micPanel(text) {
   const ss = view.ss;
-  const label = ss.listening ? esc(ss.interim) || "J'écoute…" : ss.error ? esc(ss.error) : "Touche le micro et parle";
+  const label = ss.listening ? esc(ss.interim) || "Je t'écoute…" : ss.error ? esc(ss.error) : "Touche le micro et parle";
+  const side = text
+    ? [`<button class="round" data-a="say" data-text="${esc(text)}" aria-label="Écouter">🔊</button>`,
+       `<button class="round" data-a="say" data-slow="1" data-text="${esc(text)}" aria-label="Lentement">🐢</button>`]
+    : [`<button class="round" data-a="hint" aria-label="Indice">💡</button>`, `<button class="round" data-a="next" aria-label="Passer">⏭</button>`];
   return `
-  <div class="mic-area">
-    <button class="mic ${ss.listening ? "on" : ""}" data-a="mic" aria-label="Parler">${ss.listening ? "■" : "🎤"}</button>
+  <div class="mic-panel">
+    <div class="wave ${ss.listening ? "live" : ""}">${"<i></i>".repeat(9)}</div>
     <div class="mic-label ${ss.error && !ss.listening ? "err" : ""}" id="interim">${label}</div>
-    <button class="link" data-a="kbd">⌨️ ${ss.keyboard ? "Masquer le clavier" : "Utiliser le clavier"}</button>
-    ${ss.keyboard ? `<div class="kbd"><input id="kbdInput" type="text" lang="en" autocomplete="off" autocapitalize="sentences" placeholder="Dicte ou tape en anglais…"><button data-a="check">OK</button></div>` : ""}
+    <div class="mic-row">
+      ${side[0]}
+      <button class="mic ${ss.listening ? "on" : ""}" data-a="mic" aria-label="Parler">${ss.listening ? "■" : "🎤"}</button>
+      ${side[1]}
+    </div>
+    <div class="mic-links">
+      <button class="link" data-a="kbd">⌨️ ${ss.keyboard ? "Masquer le clavier" : "Clavier"}</button>
+      ${text ? `<button class="link" data-a="next">Passer</button>` : ""}
+    </div>
+    ${ss.keyboard ? `<div class="kbd"><input id="kbdInput" type="text" lang="en" autocomplete="off" autocapitalize="sentences" placeholder="Dicte ou tape en anglais…"><button class="btn3d small" data-a="check">OK</button></div>` : ""}
+  </div>`;
+}
+
+function cardSheet(ss) {
+  const sc = ss.result.score;
+  const cls = sc >= PASS ? "ok" : sc >= 0.5 ? "mid" : "ko";
+  const title = sc >= PASS ? `✓ ${ss.result.praise}` : sc >= 0.5 ? "Presque !" : "Pas encore";
+  const sub = sc >= PASS ? "" : sc >= 0.5 ? "Retravaille les mots en rouge." : "Réécoute le modèle et réessaie.";
+  return `
+  <div class="sheet ${cls}">
+    <div class="sheet-title">${title}</div>
+    ${sub ? `<div class="sheet-sub">${sub}</div>` : ""}
+    <div class="sheet-heard">Entendu : « ${esc(ss.result.heard)} »</div>
+    <div class="sheet-actions">
+      ${sc >= PASS ? "" : `<button class="btn3d ghost" data-a="retry">Réessayer</button>`}
+      <button class="btn3d ${cls}" data-a="next">Continuer</button>
+    </div>
   </div>`;
 }
 
@@ -245,18 +397,37 @@ function renderEnd() {
   const s = view.stats;
   const streak = store.streak(state);
   return `
-  <section class="card intro">
-    <div class="big-emoji">🎉</div>
-    <h2>Séance terminée !</h2>
-    <ul class="recap">
-      ${s.reviewed ? `<li>${s.ok} / ${s.reviewed} révisions réussies</li>` : ""}
-      ${s.learned ? `<li>${s.learned} nouvelles phrases</li>` : ""}
-      ${s.dialogues ? `<li>${s.dialogues} dialogue terminé</li>` : ""}
-      <li>🔥 ${streak} jour${streak > 1 ? "s" : ""} d'affilée</li>
-    </ul>
-    <p class="muted">Les phrases reviendront en révision au bon moment. À demain !</p>
-  </section>
-  <div class="bottom"><button class="primary wide" data-a="home">Retour à l'accueil</button></div>`;
+  <div class="screen end-screen">
+    <div class="end-body">
+      <div class="end-flame">🔥</div>
+      <div class="end-streak">${plural(streak, "jour")} d'affilée</div>
+      <h1>Séance terminée !</h1>
+      <div class="end-stats">
+        ${s.learned ? `<div class="stat"><b>${s.learned}</b><span>nouvelles phrases</span></div>` : ""}
+        ${s.reviewed ? `<div class="stat"><b>${s.ok}/${s.reviewed}</b><span>révisions réussies</span></div>` : ""}
+        ${s.dialogues ? `<div class="stat"><b>${s.dialogues}</b><span>conversation</span></div>` : ""}
+      </div>
+      <p class="muted">Tes phrases reviendront en révision au bon moment.</p>
+    </div>
+    <div class="bottom-bar"><button class="btn3d wide" data-a="home">Retour aux messages</button></div>
+  </div>`;
+}
+
+function confetti() {
+  const colors = ["#7C5CFF", "#2ED3A0", "#FFB020", "#FF5C8A", "#4C7DFF"];
+  const box = document.createElement("div");
+  box.className = "confetti";
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement("i");
+    p.style.left = Math.random() * 100 + "%";
+    p.style.background = pick(colors);
+    p.style.animationDelay = Math.random() * 0.6 + "s";
+    p.style.animationDuration = 1.8 + Math.random() * 1.4 + "s";
+    p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 4000);
 }
 
 // ---------- Dialogues ----------
@@ -273,18 +444,24 @@ async function playThem() {
   const { sit, ss } = ctx;
   const turns = sit.dialogue.turns;
   ss.playing = true;
+  render();
   while (ss.turn < turns.length && turns[ss.turn].them) {
     const t = turns[ss.turn];
+    await new Promise((r) => setTimeout(r, 450));
+    if (view.ss !== ss) return;
     ss.log.push({ side: "them", en: t.them, fr: t.fr, who: t.who });
     ss.turn++;
+    sfx.pop();
     render();
     scrollToBottom();
     if (state.settings.autoplay) await say(t.them);
-    else await new Promise((r) => setTimeout(r, 600));
     if (view.ss !== ss) return;
   }
   ss.playing = false;
-  if (ss.turn >= turns.length) ss.done = true;
+  if (ss.turn >= turns.length) {
+    ss.done = true;
+    sfx.ok();
+  }
   render();
   scrollToBottom();
 }
@@ -298,58 +475,68 @@ function renderDialogue(sit, ss, inSession) {
   const t = turns[ss.turn];
   const bubbles = ss.log.map((m, i) => {
     if (m.side === "them") {
-      return `<div class="bubble them" data-a="say" data-text="${esc(m.en)}">
-        ${m.who ? `<div class="who">${esc(m.who)}</div>` : ""}
-        <div>${esc(m.en)}</div>
+      return `<div class="bubble them ${i >= ss.seen ? "anim" : ""}" data-a="say" data-text="${esc(m.en)}">
+        ${m.who ? `<div class="who">${esc(m.who)}</div>` : ""}${esc(m.en)}
         ${m.showFr ? `<div class="tr">${esc(m.fr)}</div>` : ""}
-        <button class="fr-btn" data-a="fr" data-i="${i}">${m.showFr ? "Masquer" : "FR"}</button>
+        <button class="fr-btn" data-a="fr" data-i="${i}">${m.showFr ? "×" : "FR"}</button>
       </div>`;
     }
-    return `<div class="bubble you ${m.skipped ? "skipped" : ""}">
-      <div>${esc(m.en)}</div>
-      ${m.heard ? `<div class="tr">Entendu : « ${esc(m.heard)} »</div>` : ""}
-    </div>`;
+    return `<div class="bubble you ${m.skipped ? "skipped" : ""} ${i >= ss.seen ? "anim" : ""}">${esc(m.en)}${m.heard ? `<div class="tr">« ${esc(m.heard)} »</div>` : ""}</div>`;
   }).join("");
+  ss.seen = ss.log.length;
 
   let bottom = "";
   if (ss.done) {
     bottom = `
-    <section class="card done">Dialogue terminé ! 🎉</section>
-    <div class="bottom">
-      ${inSession
-        ? `<button class="primary wide" data-a="next">Suivant</button>`
-        : `<button class="wide" data-a="replay">Rejouer</button><button class="primary wide" data-a="situation" data-id="${sit.id}">Retour</button>`}
+    <div class="sheet ok static">
+      <div class="sheet-title">🎉 Conversation terminée !</div>
+      <div class="sheet-actions">
+        ${inSession
+          ? `<button class="btn3d ok" data-a="next">Continuer</button>`
+          : `<button class="btn3d ghost" data-a="replay">Rejouer</button><button class="btn3d ok" data-a="thread" data-id="${sit.char}">Terminer</button>`}
+      </div>
     </div>`;
   } else if (ss.playing || !t) {
-    bottom = `<div class="typing"><span></span><span></span><span></span></div>`;
+    bottom = `<div class="typing-row">${avatar(sit.char, 28)}<div class="typing"><span></span><span></span><span></span></div></div>`;
   } else {
-    let result = "";
-    if (ss.result) {
-      result = `<div class="feedback mid">Pas tout à fait (${Math.round(ss.result.score * 100)} %).
-        <div class="heard">Entendu : « ${esc(ss.result.heard)} »</div>
-        <div>Essaie : <b>${esc(ss.result.answer)}</b> <button class="mini" data-a="say" data-text="${esc(ss.result.answer)}">🔊</button></div>
-      </div>`;
-    }
     bottom = `
-    <section class="card prompt">
-      <div class="prompt-label">À toi</div>
-      <div class="prompt-text">${esc(t.you)}</div>
-      ${t.free ? `<div class="muted small">Par exemple : ${t.examples.map(esc).join(" · ")}</div>` : ""}
+    <div class="composer">
+      <div class="prompt"><span class="prompt-label">À toi</span> ${esc(t.you)}</div>
+      ${t.free ? `<div class="muted small center">Par exemple : ${t.examples.map(esc).join(" · ")}</div>` : ""}
       ${ss.help && !t.free ? `<div class="help">${esc(t.answers[0])} <button class="mini" data-a="say" data-text="${esc(t.answers[0])}">🔊</button></div>` : ""}
-      ${result}
-      ${micBlock()}
-      <div class="row center">
-        ${t.free ? "" : `<button data-a="dlgHelp">💡 Aide</button>`}
-        <button data-a="dlgSkip">Passer</button>
-      </div>
-    </section>`;
+      ${dialogueMic(t)}
+    </div>
+    ${ss.result ? `
+    <div class="sheet mid">
+      <div class="sheet-title">Pas tout à fait</div>
+      <div class="sheet-heard">Entendu : « ${esc(ss.result.heard)} »</div>
+      <div class="sheet-sub">Essaie : <b>${esc(ss.result.answer)}</b> <button class="mini" data-a="say" data-text="${esc(ss.result.answer)}">🔊</button></div>
+      <div class="sheet-actions"><button class="btn3d ghost" data-a="dlgSkip">Passer</button><button class="btn3d mid" data-a="retry">Réessayer</button></div>
+    </div>` : ""}`;
   }
 
   return `
-  ${inSession ? `<div class="step-label">Mini-dialogue · ${sit.emoji} ${esc(sit.title)}</div>` : ""}
-  <div class="scene">🎬 ${esc(sit.dialogue.title)}</div>
-  <div class="chat">${bubbles}</div>
-  ${bottom}`;
+  <div class="screen chat-screen">
+    ${inSession ? sessionTop(false) : ""}
+    ${chatHeader(sit.char, inSession ? null : "thread", inSession ? null : sit.char)}
+    <div class="scene">${sit.emoji} ${esc(sit.dialogue.title)}</div>
+    <div class="chat">${bubbles}</div>
+    ${bottom}
+  </div>`;
+}
+
+function dialogueMic(t) {
+  const ss = view.ss;
+  const label = ss.listening ? esc(ss.interim) || "Je t'écoute…" : ss.error ? esc(ss.error) : "";
+  return `
+  <div class="composer-row">
+    ${t.free ? "" : `<button class="round light" data-a="dlgHelp" aria-label="Aide">💡</button>`}
+    <button class="mic ${ss.listening ? "on" : ""}" data-a="mic" aria-label="Parler">${ss.listening ? "■" : "🎤"}</button>
+    <button class="round light" data-a="kbd" aria-label="Clavier">⌨️</button>
+  </div>
+  <div class="mic-label ${ss.error && !ss.listening ? "err" : ""}" id="interim">${label}</div>
+  ${ss.keyboard ? `<div class="kbd"><input id="kbdInput" type="text" lang="en" autocomplete="off" autocapitalize="sentences" placeholder="Dicte ou tape en anglais…"><button class="btn3d small" data-a="check">OK</button></div>` : ""}
+  <div class="center"><button class="link" data-a="dlgSkip">Passer cette réplique</button></div>`;
 }
 
 function advanceDialogue(ctx, entry) {
@@ -359,6 +546,7 @@ function advanceDialogue(ctx, entry) {
   ss.result = null;
   ss.help = false;
   ss.error = null;
+  ss.keyboard = false;
   playThem();
 }
 
@@ -366,37 +554,17 @@ function onDialogueAnswer(ctx, text) {
   const { sit, ss } = ctx;
   const t = sit.dialogue.turns[ss.turn];
   if (!t || !t.you) return;
-  if (t.free) return advanceDialogue(ctx, { side: "you", en: text });
+  if (t.free) { sfx.ok(); return advanceDialogue(ctx, { side: "you", en: text }); }
   const m = bestMatch(t.answers, text);
   if (m.score >= DIALOG_PASS) {
+    sfx.ok();
     advanceDialogue(ctx, { side: "you", en: m.answer, heard: m.score < 1 ? text : null });
   } else {
+    sfx.almost();
     ss.result = { score: m.score, answer: m.score >= 0.5 ? m.answer : t.answers[0], heard: text };
     render();
     scrollToBottom();
   }
-}
-
-// ---------- Situation (consultation libre) ----------
-function renderSituation() {
-  const sit = getSituation(view.sit);
-  return `
-  <div class="topbar"><button class="icon" data-a="home" aria-label="Retour">‹</button><div class="grow"></div></div>
-  <section class="card intro">
-    <div class="big-emoji">${sit.emoji}</div>
-    <h2>${esc(sit.title)}</h2>
-    <p>${esc(sit.intro)}</p>
-  </section>
-  <h3 class="section-title">Les phrases <span class="muted small">(touche pour écouter)</span></h3>
-  <section class="list">
-    ${sit.phrases.map((p) => `
-      <button class="list-item phrase-item" data-a="say" data-text="${esc(p.en)}">
-        <span class="grow"><b>${esc(p.en)}</b><br><span class="muted small">${esc(p.fr)}</span>
-        ${p.note ? `<br><span class="small note-inline">💡 ${esc(p.note)}</span>` : ""}</span>
-        <span>🔊</span>
-      </button>`).join("")}
-  </section>
-  <div class="bottom"><button class="primary wide" data-a="practice" data-id="${sit.id}">🎬 Jouer le dialogue</button></div>`;
 }
 
 function startPractice(id) {
@@ -405,10 +573,7 @@ function startPractice(id) {
 }
 
 function renderPractice() {
-  const sit = getSituation(view.sit);
-  return `
-  <div class="topbar"><button class="icon" data-a="situation" data-id="${sit.id}" aria-label="Retour">‹</button><div class="grow"><b>${sit.emoji} ${esc(sit.title)}</b></div></div>
-  ${renderDialogue(sit, view.ss, false)}`;
+  return renderDialogue(getSituation(view.sit), view.ss, false);
 }
 
 // ---------- Réglages ----------
@@ -416,34 +581,34 @@ function renderSettings() {
   const voices = speech.englishVoices();
   const current = state.settings.voice || (voices[0] && voices[0].voiceURI);
   return `
-  <div class="topbar"><button class="icon" data-a="home" aria-label="Retour">‹</button><div class="grow"><b>Réglages</b></div></div>
-  <section class="card">
-    <h2>Voix</h2>
-    <label for="voiceSel">Voix anglaise</label>
-    <select id="voiceSel">
-      ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === current ? "selected" : ""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("")}
-    </select>
-    <label for="rateRange">Vitesse : <span id="rateVal">${state.settings.rate}</span></label>
-    <input type="range" id="rateRange" min="0.5" max="1.2" step="0.05" value="${state.settings.rate}">
-    <label class="check"><input type="checkbox" id="autoplay" ${state.settings.autoplay ? "checked" : ""}> Lire les phrases automatiquement</label>
-    <div class="row"><button data-a="say" data-text="Hey, what's up? This is how I sound.">🔊 Tester la voix</button></div>
-    <p class="muted small">Pour une voix plus naturelle sur iPhone : Réglages → Accessibilité → Contenu énoncé → Voix → Anglais, puis télécharge une voix « améliorée ».</p>
-  </section>
-  <section class="card">
-    <h2>Sauvegarde</h2>
-    <p class="muted small">Ta progression est enregistrée uniquement sur cet appareil. Copie ta sauvegarde de temps en temps (dans Notes, par exemple).</p>
-    <div class="row"><button data-a="backup">📋 Copier ma sauvegarde</button></div>
-    <label for="restoreText">Restaurer une sauvegarde</label>
-    <textarea id="restoreText" rows="3" placeholder="Colle ta sauvegarde ici…"></textarea>
-    <div class="row"><button data-a="restore">Restaurer</button></div>
-  </section>
-  <section class="card">
-    <h2>Autres</h2>
-    <div class="row">
-      <a class="button" href="test.html">🩺 Diagnostic voix</a>
-      <button class="danger" data-a="reset">Tout réinitialiser</button>
-    </div>
-  </section>`;
+  <div class="screen">
+    <header class="home-head"><h1>Réglages</h1></header>
+    <section class="panel">
+      <h3>Voix</h3>
+      <label for="voiceSel">Voix anglaise</label>
+      <select id="voiceSel">
+        ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === current ? "selected" : ""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("")}
+      </select>
+      <label for="rateRange">Vitesse : <span id="rateVal">${state.settings.rate}</span></label>
+      <input type="range" id="rateRange" min="0.5" max="1.2" step="0.05" value="${state.settings.rate}">
+      <label class="check"><input type="checkbox" id="autoplay" ${state.settings.autoplay ? "checked" : ""}> Lire les phrases automatiquement</label>
+      <button class="chip" data-a="say" data-text="Hey, what's up? This is how I sound.">🔊 Tester la voix</button>
+      <p class="muted small">Pour une voix plus naturelle : Réglages iPhone → Accessibilité → Contenu énoncé → Voix → Anglais, puis télécharge une voix « améliorée ».</p>
+    </section>
+    <section class="panel">
+      <h3>Sauvegarde</h3>
+      <p class="muted small">Ta progression est enregistrée uniquement sur ce téléphone. Copie ta sauvegarde de temps en temps (dans Notes, par exemple).</p>
+      <button class="chip" data-a="backup">📋 Copier ma sauvegarde</button>
+      <label for="restoreText">Restaurer une sauvegarde</label>
+      <textarea id="restoreText" rows="3" placeholder="Colle ta sauvegarde ici…"></textarea>
+      <button class="chip" data-a="restore">Restaurer</button>
+    </section>
+    <section class="panel">
+      <h3>Autres</h3>
+      <div class="row"><a class="chip" href="test.html">🩺 Diagnostic voix</a><button class="chip danger" data-a="reset">Tout réinitialiser</button></div>
+    </section>
+    ${tabbar("settings")}
+  </div>`;
 }
 
 async function copyText(text) {
@@ -470,14 +635,14 @@ async function startListening() {
     return;
   }
   speech.stopSpeaking();
-  Object.assign(ss, { listening: true, interim: "", error: null });
+  Object.assign(ss, { listening: true, interim: "", error: null, result: null });
   render();
   const l = speech.createListener({
     onInterim: (t) => {
       if (view.ss !== ss) return;
       ss.interim = t;
       const el = document.getElementById("interim");
-      if (el) el.textContent = t || "J'écoute…";
+      if (el) el.textContent = t || "Je t'écoute…";
     },
   });
   listener = l;
@@ -499,8 +664,9 @@ function handleAnswer(text) {
   if (!st || (st.type !== "learn" && st.type !== "review")) return;
   const ss = view.ss;
   const r = compare(getPhrase(st.id).en, text);
-  ss.result = { ...r, heard: text };
+  ss.result = { ...r, heard: text, praise: pick(PRAISE) };
   ss.error = null;
+  if (r.score >= PASS) sfx.ok(); else if (r.score >= 0.5) sfx.almost(); else sfx.ko();
   if (st.type === "review" && !ss.recorded) {
     ss.recorded = true;
     const ok = r.score >= PASS;
@@ -514,16 +680,23 @@ function handleAnswer(text) {
 
 // ---------- Actions ----------
 const actions = {
+  noop: () => {},
   home: () => go({ name: "home" }),
+  phrases: (d) => go({ name: "phrases", sit: d.id || null }),
   settings: () => go({ name: "settings" }),
-  situation: (d) => go({ name: "situation", sit: d.id }),
+  thread: (d) => go({ name: "thread", char: d.id }),
   practice: (d) => startPractice(d.id),
   replay: () => startPractice(view.sit),
   start: startSession,
   next: nextStep,
   say: (d) => say(d.text, d.slow === "1"),
   mic: startListening,
-  kbd: () => { view.ss.keyboard = !view.ss.keyboard; render(); if (view.ss.keyboard) document.getElementById("kbdInput").focus(); },
+  retry: () => { view.ss.result = null; render(); },
+  kbd: () => {
+    view.ss.keyboard = !view.ss.keyboard;
+    render();
+    if (view.ss.keyboard) document.getElementById("kbdInput").focus();
+  },
   check: () => {
     const input = document.getElementById("kbdInput");
     const v = input && input.value.trim();
@@ -585,6 +758,9 @@ app.addEventListener("click", (e) => {
   const fn = actions[el.dataset.a];
   if (fn) fn(el.dataset, el);
 });
+
+// Débloque l'audio (iOS exige un geste de l'utilisateur).
+document.addEventListener("pointerdown", sfx.unlock, { passive: true });
 
 app.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.target.id === "kbdInput") actions.check();
