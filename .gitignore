@@ -1,1 +1,4 @@
 .claude/
+# Outils de génération audio : dépendances et modèle (≈ 400 Mo), fichiers de test
+tools/tts/node_modules/
+tools/tts/*.wav

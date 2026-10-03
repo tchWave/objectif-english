@@ -1,0 +1,18 @@
+{
+  "name": "objectif-english-tts",
+  "version": "1.0.0",
+  "description": "Génère les fichiers audio de l'appli avec Kokoro",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "kokoro-js": "^1.2.1",
+    "lamejs": "^1.2.1"
+  }
+}
