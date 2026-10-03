@@ -1,7 +1,7 @@
 # Roadmap · Objectif English
 
 Appli perso pour apprendre l'**anglais parlé du quotidien**, sur iPhone.
-Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 2 livrée).
+Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 2 et voix IA livrées).
 
 **Notre façon d'avancer :** je code une étape, tu la testes sur ton iPhone pendant quelques jours, tu me dis ce qui coince, on ajuste, puis on passe à l'étape suivante.
 
@@ -70,6 +70,16 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 2 li
 
 ---
 
+## ✅ Bonus · Des voix IA naturelles (terminé le 3 octobre)
+
+- [x] Voix générées avec **Kokoro** (IA open source, gratuite, sur le PC) au lieu des voix de l'iPhone
+- [x] **Heart** 🇺🇸 pour les phrases, les histoires, les sons et les personnages féminins ; **Fenrir** 🇺🇸 pour les personnages masculins
+- [x] Environ 800 enregistrements, régénérés automatiquement pour chaque nouveau contenu (`node tools/tts/generate.mjs`)
+- [x] La voix de l'iPhone reste en secours (fichier manquant, hors ligne avant la première écoute) et pour le français du mode mains libres
+- [x] Interrupteur « Voix IA » dans les réglages ; les voix fantaisie d'Apple (Superstar, Bulles…) sont retirées de la liste
+
+---
+
 ## 🔜 Phase 3 · Motivation et finitions (semaine du 19 octobre)
 
 - [ ] **Accueil au premier lancement** : présentation rapide et choix de l'objectif quotidien (5, 10 ou 15 min)
@@ -77,7 +87,7 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 2 li
 - [ ] **Statistiques** : calendrier des séances, progression semaine par semaine
 - [ ] **Niveau estimé** (comme Speak) : un indicateur A1 → A2 → B1 calculé d'après tes résultats, pour voir ta progression
 - [ ] **Sauvegarde plus simple** (fichier à garder dans l'app Fichiers ou iCloud)
-- [ ] Réglages sons on/off, voix différente pour chaque personnage
+- [ ] Réglage pour couper les petits sons, et pourquoi pas une voix différente pour chaque personnage (Kokoro en propose 28)
 - [ ] Corrections suite à tes retours d'usage
 
 ---

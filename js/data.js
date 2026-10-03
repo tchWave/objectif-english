@@ -8,13 +8,13 @@ import { MORE_CHARACTERS, MORE_SITUATIONS } from "./situations-more.js";
 import { EXTRA_CHARACTERS, EXTRA_SITUATIONS } from "./situations-extra.js";
 
 export const CHARACTERS = {
-  jake: { name: "Jake", role: "Ton collègue", emoji: "💼", color: "#4C7DFF" },
-  leo: { name: "Leo", role: "Un inconnu pressé", emoji: "🏃", color: "#FF8A3D" },
-  sam: { name: "Sam", role: "Ton pote", emoji: "🍻", color: "#8B5CF6" },
-  chloe: { name: "Chloe", role: "Rencontrée en soirée", emoji: "🎉", color: "#EC4899" },
-  mia: { name: "Mia", role: "Barista", emoji: "☕", color: "#B7794B" },
-  emma: { name: "Emma", role: "Vendeuse", emoji: "🛍️", color: "#14B8A6" },
-  rosa: { name: "Rosa", role: "Une passante", emoji: "🗺️", color: "#22A06B" },
+  jake: { name: "Jake", role: "Ton collègue", emoji: "💼", color: "#4C7DFF", voice: "am_fenrir" },
+  leo: { name: "Leo", role: "Un inconnu pressé", emoji: "🏃", color: "#FF8A3D", voice: "am_fenrir" },
+  sam: { name: "Sam", role: "Ton pote", emoji: "🍻", color: "#8B5CF6", voice: "am_fenrir" },
+  chloe: { name: "Chloe", role: "Rencontrée en soirée", emoji: "🎉", color: "#EC4899", voice: "af_heart" },
+  mia: { name: "Mia", role: "Barista", emoji: "☕", color: "#B7794B", voice: "af_heart" },
+  emma: { name: "Emma", role: "Vendeuse", emoji: "🛍️", color: "#14B8A6", voice: "af_heart" },
+  rosa: { name: "Rosa", role: "Une passante", emoji: "🗺️", color: "#22A06B", voice: "af_heart" },
   ...MORE_CHARACTERS,
   ...EXTRA_CHARACTERS,
 };
@@ -215,11 +215,11 @@ const BASE_SITUATIONS = [
     dialogue: {
       title: "Dîner avec un ami",
       turns: [
-        { who: "Serveur", them: "Hi guys! Are you ready to order?", fr: "Bonsoir ! Vous êtes prêts à commander ?" },
+        { who: "Serveuse", voice: "af_heart", them: "Hi guys! Are you ready to order?", fr: "Bonsoir ! Vous êtes prêts à commander ?" },
         { you: "Commande le burger et demande de l'eau.", answers: ["I'll have the burger. Can I get some water?", "I'll have the burger, and can I get some water, please?"] },
-        { who: "Serveur", them: "Sure thing! … So, how is everything?", fr: "Pas de problème ! … Alors, tout se passe bien ?" },
+        { who: "Serveuse", voice: "af_heart", them: "Sure thing! … So, how is everything?", fr: "Pas de problème ! … Alors, tout se passe bien ?" },
         { you: "Dis que tout est super.", answers: ["Everything's great, thanks.", "Everything's great, thank you."] },
-        { who: "Serveur", them: "Awesome. Can I get you anything else?", fr: "Super. Je vous apporte autre chose ?" },
+        { who: "Serveuse", voice: "af_heart", them: "Awesome. Can I get you anything else?", fr: "Super. Je vous apporte autre chose ?" },
         { you: "Demande l'addition.", answers: ["Can we get the check?", "Can we get the check, please?", "Can we get the bill, please?"] },
         { who: "Sam", them: "Let's split it.", fr: "On partage ?" },
         { you: "Dis que c'est toi qui invites.", answers: ["It's on me.", "No, it's on me."] },

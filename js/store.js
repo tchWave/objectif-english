@@ -28,7 +28,7 @@ function fresh() {
     perf: [],
     stories: {},
     sounds: {},
-    settings: { voice: null, rate: 0.9, autoplay: true },
+    settings: { voice: null, rate: 0.9, autoplay: true, aiVoice: true },
   };
 }
 

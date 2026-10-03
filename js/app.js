@@ -4,6 +4,8 @@ import { compare, bestMatch, tokens } from "./match.js";
 import * as speech from "./speech.js";
 import * as store from "./store.js";
 import * as sfx from "./sfx.js";
+import { speakerVoice } from "./voices.js";
+import { unlockClips } from "./clips.js";
 
 const PASS = 0.8;
 const DIALOG_PASS = 0.7;
@@ -42,8 +44,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const wordCount = (id) => getPhrase(id).en.split(/\s+/).length;
 const level = () => store.level(state);
 const levelLabel = (l) => (l < 0.6 ? "facile" : l > 0.85 ? "difficile" : "normale");
-const say = (text, slow) =>
-  speech.speak(text, { rate: state.settings.rate * (slow ? 0.75 : 1), voiceURI: state.settings.voice });
+// voice : voix IA d'un personnage (sinon la voix principale).
+const say = (text, slow, voice) =>
+  speech.speak(text, { rate: state.settings.rate * (slow ? 0.75 : 1), voiceURI: state.settings.voice, ...(voice ? { voice } : {}) });
+// Bulle d'une réplique de dialogue : un toucher la fait réécouter avec la voix du personnage.
+const themBubble = (sit, t, extraClass = "") =>
+  `<div class="bubble them ${extraClass}" data-a="say" data-text="${esc(t.them)}" data-voice="${speakerVoice(sit, t)}">${t.who ? `<div class="who">${esc(t.who)}</div>` : ""}${esc(t.them)}</div>`;
 // Les traductions contiennent « (e) » ou « / » : on les retire pour que la voix française les lise bien.
 const sayFr = (text) =>
   speech.speak(text.replace(/\s?\((?:e|es|s|nouvelle)\)/g, "").replace(/\s*\/\s*/g, ", ou "), { lang: "fr-FR", rate: 1 });
@@ -219,7 +225,7 @@ function renderThread() {
   const history = sits.map((s) => `
     <div class="divider"><span>${s.emoji} ${esc(s.title)}</span></div>
     ${s.dialogue.turns.map((t) => t.them
-      ? `<div class="bubble them" data-a="say" data-text="${esc(t.them)}">${t.who ? `<div class="who">${esc(t.who)}</div>` : ""}${esc(t.them)}</div>`
+      ? themBubble(s, t)
       : `<div class="bubble you">${esc(t.free ? t.examples[0] : t.answers[0])}</div>`).join("")}
     <div class="episode-actions">
       <button class="chip" data-a="practice" data-id="${s.id}">🎬 Rejouer</button>
@@ -231,7 +237,7 @@ function renderThread() {
     const first = next.dialogue.turns.find((t) => t.them);
     pending = `
     <div class="divider new"><span>Nouveau · ${next.emoji} ${esc(next.title)}</span></div>
-    ${first ? `<div class="bubble them" data-a="say" data-text="${esc(first.them)}">${esc(first.them)}</div>` : `<div class="bubble them muted">${esc(next.dialogue.title)}</div>`}
+    ${first ? themBubble(next, first) : `<div class="bubble them muted">${esc(next.dialogue.title)}</div>`}
     <div class="reply-cta">
       <p class="muted small">Avant de répondre, apprends ${next.phrases.length} phrases utiles.</p>
       <button class="btn3d" data-a="start">Répondre</button>
@@ -611,7 +617,7 @@ function renderIntro(sit) {
     <div class="intro-body">
       ${avatar(sit.char, 96)}
       <div class="intro-kicker">${esc(c.name)} · ${esc(c.role)}</div>
-      ${first ? `<div class="bubble them big" data-a="say" data-text="${esc(first.them)}">${esc(first.them)}</div>` : `<h2>${esc(sit.dialogue.title)}</h2>`}
+      ${first ? themBubble(sit, first, "big") : `<h2>${esc(sit.dialogue.title)}</h2>`}
       <div class="tip"><b>${sit.emoji} ${esc(sit.title)}</b><p>${esc(sit.intro)}</p></div>
     </div>
     <div class="bottom-bar"><button class="btn3d wide" data-a="next">Apprendre les ${sit.phrases.length} phrases</button></div>
@@ -805,7 +811,7 @@ function renderExpress(st) {
     <div class="card-tag light">⚡ Réponse express</div>
     ${chatHeader(sit.char, null)}
     <div class="chat">
-      ${expressQuestion(sit, st.turn).map((q) => `<div class="bubble them" data-a="say" data-text="${esc(q.them)}">${q.who ? `<div class="who">${esc(q.who)}</div>` : ""}${esc(q.them)}</div>`).join("")}
+      ${expressQuestion(sit, st.turn).map((q) => themBubble(sit, q)).join("")}
     </div>
     <div class="timer ${ss.answered || r ? "stopped" : ""}"><div id="timerFill" style="width:${Math.round(left * 100)}%"></div></div>
     <div class="composer">
@@ -825,8 +831,9 @@ function renderExpress(st) {
 async function startExpress(st) {
   const ss = view.ss;
   if (state.settings.autoplay) {
-    for (const q of expressQuestion(getSituation(st.sit), st.turn)) {
-      await say(q.them);
+    const sit = getSituation(st.sit);
+    for (const q of expressQuestion(sit, st.turn)) {
+      await say(q.them, false, speakerVoice(sit, q));
       if (view.ss !== ss) return;
     }
   }
@@ -998,12 +1005,12 @@ async function playThem() {
     const t = turns[ss.turn];
     await sleep(450);
     if (view.ss !== ss) return;
-    ss.log.push({ side: "them", en: t.them, fr: t.fr, who: t.who });
+    ss.log.push({ side: "them", en: t.them, fr: t.fr, who: t.who, voice: speakerVoice(sit, t) });
     ss.turn++;
     sfx.pop();
     render();
     scrollToBottom();
-    if (state.settings.autoplay) await say(t.them);
+    if (state.settings.autoplay) await say(t.them, false, speakerVoice(sit, t));
     if (view.ss !== ss) return;
   }
   ss.playing = false;
@@ -1024,7 +1031,7 @@ function renderDialogue(sit, ss, inSession) {
   const t = turns[ss.turn];
   const bubbles = ss.log.map((m, i) => {
     if (m.side === "them") {
-      return `<div class="bubble them ${i >= ss.seen ? "anim" : ""}" data-a="say" data-text="${esc(m.en)}">
+      return `<div class="bubble them ${i >= ss.seen ? "anim" : ""}" data-a="say" data-text="${esc(m.en)}" data-voice="${m.voice}">
         ${m.who ? `<div class="who">${esc(m.who)}</div>` : ""}${esc(m.en)}
         ${m.showFr ? `<div class="tr">${esc(m.fr)}</div>` : ""}
         <button class="fr-btn" data-a="fr" data-i="${i}">${m.showFr ? "×" : "FR"}</button>
@@ -1443,7 +1450,9 @@ function renderSettings() {
     </header>
     <section class="panel">
       <h3>Voix</h3>
-      <label for="voiceSel">Voix anglaise</label>
+      <label class="check"><input type="checkbox" id="aiVoice" ${state.settings.aiVoice !== false ? "checked" : ""}> Voix IA naturelle (recommandé)</label>
+      <p class="muted small">Les phrases et les personnages sont enregistrés avec des voix IA. La voix de l'iPhone ci-dessous sert de secours, et pour le français du mode mains libres.</p>
+      <label for="voiceSel">Voix de l'iPhone (secours)</label>
       <select id="voiceSel">
         ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === current ? "selected" : ""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("")}
       </select>
@@ -1581,7 +1590,7 @@ const actions = {
   story: (d) => openStory(d.id),
   handsfree: openHandsfree,
   next: nextStep,
-  say: (d) => say(d.text, d.slow === "1"),
+  say: (d) => say(d.text, d.slow === "1", d.voice),
   sayPair: async (d) => {
     await say(d.w1);
     await sleep(250);
@@ -1792,7 +1801,7 @@ app.addEventListener("click", (e) => {
 });
 
 // Débloque l'audio (iOS exige un geste de l'utilisateur).
-document.addEventListener("pointerdown", sfx.unlock, { passive: true });
+document.addEventListener("pointerdown", () => { sfx.unlock(); unlockClips(); }, { passive: true });
 
 app.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
@@ -1811,11 +1820,17 @@ app.addEventListener("input", (e) => {
 app.addEventListener("change", (e) => {
   if (e.target.id === "voiceSel") { state.settings.voice = e.target.value; save(); }
   if (e.target.id === "autoplay") { state.settings.autoplay = e.target.checked; save(); }
+  if (e.target.id === "aiVoice") {
+    state.settings.aiVoice = e.target.checked;
+    speech.setClipsEnabled(e.target.checked);
+    save();
+  }
   if (e.target.id === "hfCheck") view.hf.mode = e.target.checked ? "check" : "passive";
   if (e.target.id === "hfText") view.hf.showText = e.target.checked;
 });
 
 speech.initVoices(() => { if (view.name === "settings") render(); });
+speech.setClipsEnabled(state.settings.aiVoice !== false);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});

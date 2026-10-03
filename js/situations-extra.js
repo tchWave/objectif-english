@@ -1,16 +1,16 @@
 // Situations ajoutées en phase 1 bis : vie pratique, séries, voyage, carrière. Même format que dans data.js.
 
 export const EXTRA_CHARACTERS = {
-  carla: { name: "Carla", role: "Caissière", emoji: "🛒", color: "#E11D48" },
-  jay: { name: "Jay", role: "Coach sportif", emoji: "🏋️", color: "#EA580C" },
-  mo: { name: "Mo", role: "Coiffeur", emoji: "💇", color: "#7C3AED" },
-  diaz: { name: "Officer Diaz", role: "Policière", emoji: "🚨", color: "#1D4ED8" },
-  grace: { name: "Grace", role: "Agente à l'aéroport", emoji: "🛫", color: "#0891B2" },
-  ben: { name: "Ben", role: "Steward", emoji: "✈️", color: "#2563EB" },
-  daniel: { name: "Daniel", role: "Conseiller bancaire", emoji: "🏦", color: "#15803D" },
-  olivia: { name: "Olivia", role: "Recruteuse", emoji: "🤝", color: "#BE185D" },
-  raj: { name: "Raj", role: "Rencontré à un salon pro", emoji: "🏢", color: "#B45309" },
-  steve: { name: "Steve", role: "Un client", emoji: "📧", color: "#475569" },
+  carla: { name: "Carla", role: "Caissière", emoji: "🛒", color: "#E11D48", voice: "af_heart" },
+  jay: { name: "Jay", role: "Coach sportif", emoji: "🏋️", color: "#EA580C", voice: "am_fenrir" },
+  mo: { name: "Mo", role: "Coiffeur", emoji: "💇", color: "#7C3AED", voice: "am_fenrir" },
+  diaz: { name: "Officer Diaz", role: "Policière", emoji: "🚨", color: "#1D4ED8", voice: "af_heart" },
+  grace: { name: "Grace", role: "Agente à l'aéroport", emoji: "🛫", color: "#0891B2", voice: "af_heart" },
+  ben: { name: "Ben", role: "Steward", emoji: "✈️", color: "#2563EB", voice: "am_fenrir" },
+  daniel: { name: "Daniel", role: "Conseiller bancaire", emoji: "🏦", color: "#15803D", voice: "am_fenrir" },
+  olivia: { name: "Olivia", role: "Recruteuse", emoji: "🤝", color: "#BE185D", voice: "af_heart" },
+  raj: { name: "Raj", role: "Rencontré à un salon pro", emoji: "🏢", color: "#B45309", voice: "am_fenrir" },
+  steve: { name: "Steve", role: "Un client", emoji: "📧", color: "#475569", voice: "am_fenrir" },
 };
 
 export const EXTRA_SITUATIONS = [
@@ -249,7 +249,7 @@ export const EXTRA_SITUATIONS = [
       title: "Tu montes dans l'avion",
       turns: [
         { you: "Quelqu'un est assis à ta place : dis-le poliment.", answers: ["Excuse me, I think you're in my seat.", "Sorry, I think you're in my seat."] },
-        { who: "Un passager", them: "Oh, sorry! My bad.", fr: "Oh, pardon ! Ma faute." },
+        { who: "Une passagère", voice: "af_heart", them: "Oh, sorry! My bad.", fr: "Oh, pardon ! Ma faute." },
         { them: "Hi there! Chicken or pasta?", fr: "Bonjour ! Poulet ou pâtes ?" },
         { you: "Prends le poulet, et demande de l'eau.", answers: ["I'll have the chicken. Could I get some water?"] },
         { them: "Sure, here you go.", fr: "Bien sûr, tenez." },

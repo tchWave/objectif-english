@@ -1,14 +1,14 @@
 // Situations ajoutées en phase 1 (chapitres 2 à 4). Même format que dans data.js.
 
 export const MORE_CHARACTERS = {
-  marcus: { name: "Marcus", role: "Chauffeur VTC", emoji: "🚕", color: "#F59E0B" },
-  linda: { name: "Linda", role: "Ton hôte Airbnb", emoji: "🏠", color: "#0EA5E9" },
-  priya: { name: "Priya", role: "Pharmacienne", emoji: "💊", color: "#10B981" },
-  ross: { name: "Dr Ross", role: "Médecin", emoji: "🩺", color: "#64748B" },
-  tom: { name: "Tom", role: "Ton voisin", emoji: "🌤️", color: "#EF4444" },
-  nina: { name: "Nina", role: "Ta coloc", emoji: "🛋️", color: "#D946EF" },
-  diane: { name: "Diane", role: "Ta cheffe", emoji: "📊", color: "#6366F1" },
-  tony: { name: "Tony", role: "Livreur", emoji: "📦", color: "#A16207" },
+  marcus: { name: "Marcus", role: "Chauffeur VTC", emoji: "🚕", color: "#F59E0B", voice: "am_fenrir" },
+  linda: { name: "Linda", role: "Ton hôte Airbnb", emoji: "🏠", color: "#0EA5E9", voice: "af_heart" },
+  priya: { name: "Priya", role: "Pharmacienne", emoji: "💊", color: "#10B981", voice: "af_heart" },
+  ross: { name: "Dr Ross", role: "Médecin", emoji: "🩺", color: "#64748B", voice: "am_fenrir" },
+  tom: { name: "Tom", role: "Ton voisin", emoji: "🌤️", color: "#EF4444", voice: "am_fenrir" },
+  nina: { name: "Nina", role: "Ta coloc", emoji: "🛋️", color: "#D946EF", voice: "af_heart" },
+  diane: { name: "Diane", role: "Ta cheffe", emoji: "📊", color: "#6366F1", voice: "af_heart" },
+  tony: { name: "Tony", role: "Livreur", emoji: "📦", color: "#A16207", voice: "am_fenrir" },
 };
 
 export const MORE_SITUATIONS = [

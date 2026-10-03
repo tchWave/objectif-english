@@ -1,4 +1,6 @@
 // Voix de synthèse (l'appli parle) et reconnaissance vocale (l'appli écoute), via les API du navigateur.
+import { hasClip, playClip, stopClip } from "./clips.js";
+import { MAIN_VOICE } from "./voices.js";
 
 export const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 export const hasTTS = "speechSynthesis" in window;
@@ -41,9 +43,26 @@ export function initVoices(onChange) {
   setTimeout(load, 2000);
 }
 
+// Voix IA : si un enregistrement existe pour ce texte et cette voix, on le joue ; sinon voix de l'appareil.
+let clipsEnabled = true;
+export function setClipsEnabled(on) {
+  clipsEnabled = on;
+}
+
 // Résout quand la phrase est finie (ou interrompue, ou au bout d'un délai de sécurité).
-// lang: "fr-FR" pour faire parler l'appli en français (mode mains libres).
-export function speak(text, { rate = 0.9, voiceURI = null, lang = "en-US" } = {}) {
+// lang : "fr-FR" pour faire parler l'appli en français (mode mains libres, toujours avec la voix de l'appareil).
+// voice : voix IA voulue (ex. celle d'un personnage). device : force la voix de l'appareil.
+export function speak(text, { rate = 0.9, voiceURI = null, lang = "en-US", voice = MAIN_VOICE, device = false } = {}) {
+  if (clipsEnabled && !device && !/^fr/i.test(lang) && hasClip(voice, text)) {
+    if (hasTTS) speechSynthesis.cancel();
+    // La vitesse réglée (0,9 par défaut) correspond au débit normal des enregistrements.
+    const clipRate = Math.min(1.5, Math.max(0.5, rate / 0.9));
+    return playClip(voice, text, clipRate).catch(() => speakDevice(text, { rate, voiceURI, lang }));
+  }
+  return speakDevice(text, { rate, voiceURI, lang });
+}
+
+function speakDevice(text, { rate, voiceURI, lang }) {
   return new Promise((resolve) => {
     if (!hasTTS) return resolve();
     speechSynthesis.cancel();
@@ -67,6 +86,7 @@ export function speak(text, { rate = 0.9, voiceURI = null, lang = "en-US" } = {}
 }
 
 export function stopSpeaking() {
+  stopClip();
   if (hasTTS) speechSynthesis.cancel();
 }
 

@@ -121,7 +121,7 @@ document.getElementById("voices").addEventListener("click", async (e) => {
   stopSpeaking();
   mark(btn);
   if (voice === "device") {
-    await speak(SENTENCES[i].text, { rate: settings.rate * (slow() ? 0.75 : 1), voiceURI: settings.voice });
+    await speak(SENTENCES[i].text, { rate: settings.rate * (slow() ? 0.75 : 1), voiceURI: settings.voice, device: true });
     mark(null);
     return;
   }
