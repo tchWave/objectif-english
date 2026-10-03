@@ -8,8 +8,9 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { SITUATIONS } from "../../js/data.js";
 import { STORIES, SOUNDS } from "../../js/practice-data.js";
-import { MAIN_VOICE, speakerVoice, audioKey } from "../../js/voices.js";
+import { MAIN_VOICE, FR_VOICE, speakerVoice, audioKey, frSpeech } from "../../js/voices.js";
 import { toMp3 } from "./mp3.mjs";
+import { generateFr } from "./french.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const outDir = join(root, "audio", "v1");
@@ -24,7 +25,10 @@ const add = (voice, text) => {
   if (!jobs.has(key)) jobs.set(key, { voice, text });
 };
 for (const sit of SITUATIONS) {
-  sit.phrases.forEach((p) => add(MAIN_VOICE, p.en));
+  sit.phrases.forEach((p) => {
+    add(MAIN_VOICE, p.en);
+    add(FR_VOICE, frSpeech(p.fr)); // la traduction, dite en français dans le mode mains libres
+  });
   for (const turn of sit.dialogue.turns) {
     if (turn.them) add(speakerVoice(sit, turn), turn.them);
     if (turn.answers) turn.answers.forEach((a) => add(MAIN_VOICE, a));
@@ -51,7 +55,7 @@ if (todo.length) {
   const t0 = Date.now();
   for (let i = 0; i < todo.length; i++) {
     const [key, { voice, text }] = todo[i];
-    const audio = await tts.generate(text, { voice });
+    const audio = voice === FR_VOICE ? await generateFr(tts, text, voice) : await tts.generate(text, { voice });
     writeFileSync(join(outDir, `${key}.mp3`), toMp3(audio.audio, audio.sampling_rate));
     if ((i + 1) % 25 === 0 || i === todo.length - 1) {
       const elapsed = (Date.now() - t0) / 1000;

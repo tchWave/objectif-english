@@ -23,10 +23,12 @@
   }
   .num.device { background: var(--surface-2); color: var(--text); box-shadow: none; }
   .grade { font-size: .75rem; font-weight: 800; color: var(--ok-dark); background: var(--ok-soft); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+  .chosen { font-size: .75rem; font-weight: 800; color: #fff; background: var(--primary); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
   .plays { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .plays .chip { justify-content: center; }
   .chip.on { background: var(--primary); color: #fff; }
   .slow-toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .section-head { margin: 14px 4px 0; }
 </style>
 </head>
 <body>
@@ -37,36 +39,45 @@
   </header>
 
   <section class="panel intro">
-    <p>Ces voix ont été générées par une IA (Kokoro). Écoute-les sur ces trois phrases de l'appli, compare avec la voix actuelle de ton iPhone, puis dis-moi :</p>
-    <ol class="sentences">
-      <li>la voix principale pour les phrases (son numéro) ;</li>
-      <li>les voix qui te plaisent pour les personnages (hommes, femmes, accent anglais).</li>
-    </ol>
+    <p>Compare les voix générées par une IA (Kokoro) avec celles de ton iPhone. Touche ▶ pour écouter.</p>
     <label class="slow-toggle"><input type="checkbox" id="slow"> 🐢 Écouter en mode lent</label>
   </section>
 
+  <h2 class="chapter-title section-head">🇫🇷 Voix française</h2>
   <section class="panel">
-    <h3>Les phrases</h3>
+    <p class="muted small">Utilisée dans le mode mains libres, pour te dire la phrase en français avant l'anglais.</p>
+    <ol class="sentences" id="sentences-fr"></ol>
+  </section>
+  <div id="voices-fr" class="voice-list" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <h2 class="chapter-title section-head">🇺🇸 Voix anglaises</h2>
+  <section class="panel">
+    <p class="muted small">Tu as choisi <b>Heart</b> (phrases et personnages féminins) et <b>Fenrir</b> (personnages masculins).</p>
     <ol class="sentences" id="sentences"></ol>
   </section>
-
-  <div id="voices" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div id="voices" class="voice-list" style="display:flex;flex-direction:column;gap:12px"></div>
 </main>
 
 <script type="module">
 import { speak, initVoices, stopSpeaking } from "./js/speech.js";
+import { frSpeech } from "./js/voices.js";
 
 const SENTENCES = [
   { label: "Salut", text: "Hey, what's up? Not much, you?" },
   { label: "Café", text: "Can I get a large latte to go, please?" },
   { label: "Histoire", text: "You won't believe this. I lost my phone on the bus yesterday!" },
 ];
+const FR_SENTENCES = [
+  { label: "Verre", text: "Ça te dit d'aller boire un verre ?" },
+  { label: "Pas d'ici", text: "Désolé(e), je ne suis pas d'ici." },
+  { label: "Retard", text: "Je suis en retard, mais j'arrive ! Disons 19 h ?" },
+];
 const VOICES = [
-  { id: "af_heart", name: "Heart", flag: "🇺🇸", who: "Femme, américaine", grade: "A" },
+  { id: "af_heart", name: "Heart", flag: "🇺🇸", who: "Femme, américaine", grade: "A", chosen: true },
   { id: "af_bella", name: "Bella", flag: "🇺🇸", who: "Femme, américaine", grade: "A-" },
   { id: "af_nicole", name: "Nicole", flag: "🇺🇸", who: "Femme, américaine", grade: "B-" },
   { id: "am_michael", name: "Michael", flag: "🇺🇸", who: "Homme, américain", grade: "C+" },
-  { id: "am_fenrir", name: "Fenrir", flag: "🇺🇸", who: "Homme, américain", grade: "C+" },
+  { id: "am_fenrir", name: "Fenrir", flag: "🇺🇸", who: "Homme, américain", grade: "C+", chosen: true },
   { id: "am_puck", name: "Puck", flag: "🇺🇸", who: "Homme, américain", grade: "C+" },
   { id: "bf_emma", name: "Emma", flag: "🇬🇧", who: "Femme, britannique", grade: "B-" },
   { id: "bm_george", name: "George", flag: "🇬🇧", who: "Homme, britannique", grade: "C" },
@@ -87,24 +98,27 @@ player.preservesPitch = true;
 const slow = () => document.getElementById("slow").checked;
 
 document.getElementById("sentences").innerHTML = SENTENCES.map((s) => `<li>${esc(s.text)}</li>`).join("");
+document.getElementById("sentences-fr").innerHTML = FR_SENTENCES.map((s) => `<li>${esc(frSpeech(s.text))}</li>`).join("");
 
-const buttons = (key) =>
-  `<div class="plays">${SENTENCES.map((s, i) => `<button class="chip" data-voice="${key}" data-i="${i}">▶ ${s.label}</button>`).join("")}</div>`;
+const buttons = (key, list) =>
+  `<div class="plays">${list.map((s, i) => `<button class="chip" data-voice="${key}" data-i="${i}">▶ ${s.label}</button>`).join("")}</div>`;
 
-document.getElementById("voices").innerHTML = `
+const card = (num, title, sub, badge, key, list) => `
   <section class="panel voice">
-    <div class="voice-head"><span class="num device">📱</span><div class="grow"><b>Voix actuelle de l'iPhone</b><div class="muted small">Pour comparer</div></div></div>
-    ${buttons("device")}
-  </section>
-  ${VOICES.map((v, n) => `
-  <section class="panel voice">
-    <div class="voice-head">
-      <span class="num">${n + 1}</span>
-      <div class="grow"><b>${v.flag} ${v.name}</b><div class="muted small">${v.who}</div></div>
-      <span class="grade" title="Note de qualité donnée par Kokoro">Note ${v.grade}</span>
-    </div>
-    ${buttons(v.id)}
-  </section>`).join("")}`;
+    <div class="voice-head">${num}<div class="grow"><b>${title}</b><div class="muted small">${sub}</div></div>${badge}</div>
+    ${buttons(key, list)}
+  </section>`;
+
+document.getElementById("voices-fr").innerHTML =
+  card(`<span class="num device">📱</span>`, "Voix française actuelle de l'iPhone", "Celle utilisée aujourd'hui", "", "device-fr", FR_SENTENCES) +
+  card(`<span class="num">FR</span>`, "🇫🇷 Siwis", "Femme, voix IA Kokoro", `<span class="grade">Note B-</span>`, "ff_siwis", FR_SENTENCES);
+
+document.getElementById("voices").innerHTML =
+  card(`<span class="num device">📱</span>`, "Voix anglaise de l'iPhone", "Pour comparer", "", "device", SENTENCES) +
+  VOICES.map((v, n) => card(
+    `<span class="num">${n + 1}</span>`, `${v.flag} ${v.name}`, v.who,
+    v.chosen ? `<span class="chosen">Choisie</span>` : `<span class="grade" title="Note de qualité donnée par Kokoro">Note ${v.grade}</span>`,
+    v.id, SENTENCES)).join("");
 
 function mark(btn) {
   document.querySelectorAll(".plays .chip.on").forEach((b) => b.classList.remove("on"));
@@ -113,15 +127,17 @@ function mark(btn) {
 
 player.addEventListener("ended", () => mark(null));
 
-document.getElementById("voices").addEventListener("click", async (e) => {
+document.getElementById("page").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-voice]");
   if (!btn) return;
   const { voice, i } = btn.dataset;
   player.pause();
   stopSpeaking();
   mark(btn);
-  if (voice === "device") {
-    await speak(SENTENCES[i].text, { rate: settings.rate * (slow() ? 0.75 : 1), voiceURI: settings.voice, device: true });
+  if (voice === "device" || voice === "device-fr") {
+    const fr = voice === "device-fr";
+    const text = fr ? frSpeech(FR_SENTENCES[i].text) : SENTENCES[i].text;
+    await speak(text, { rate: (fr ? 1 : settings.rate) * (slow() ? 0.75 : 1), voiceURI: settings.voice, lang: fr ? "fr-FR" : "en-US", device: true });
     mark(null);
     return;
   }

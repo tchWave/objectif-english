@@ -4,6 +4,16 @@ import { CHARACTERS } from "./data.js";
 
 // Voix des phrases à apprendre, des histoires et des sons.
 export const MAIN_VOICE = "af_heart";
+// Voix française (mode mains libres).
+export const FR_VOICE = "ff_siwis";
+
+// Texte français tel qu'il est prononcé : sans « (e) » ni « / », et « 19 h » dit « 19 heures ».
+export function frSpeech(fr) {
+  return fr
+    .replace(/\s?\((?:e|es|s|nouvelle)\)/g, "")
+    .replace(/\s*\/\s*/g, ", ou ")
+    .replace(/(\d+) h\b/g, "$1 heures");
+}
 
 // Voix d'une réplique de dialogue : celle indiquée sur la réplique (ex. la serveuse),
 // sinon celle du personnage de la situation.

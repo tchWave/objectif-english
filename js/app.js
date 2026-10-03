@@ -4,7 +4,7 @@ import { compare, bestMatch, tokens } from "./match.js";
 import * as speech from "./speech.js";
 import * as store from "./store.js";
 import * as sfx from "./sfx.js";
-import { speakerVoice } from "./voices.js";
+import { speakerVoice, frSpeech, FR_VOICE } from "./voices.js";
 import { unlockClips } from "./clips.js";
 
 const PASS = 0.8;
@@ -50,9 +50,8 @@ const say = (text, slow, voice) =>
 // Bulle d'une réplique de dialogue : un toucher la fait réécouter avec la voix du personnage.
 const themBubble = (sit, t, extraClass = "") =>
   `<div class="bubble them ${extraClass}" data-a="say" data-text="${esc(t.them)}" data-voice="${speakerVoice(sit, t)}">${t.who ? `<div class="who">${esc(t.who)}</div>` : ""}${esc(t.them)}</div>`;
-// Les traductions contiennent « (e) » ou « / » : on les retire pour que la voix française les lise bien.
-const sayFr = (text) =>
-  speech.speak(text.replace(/\s?\((?:e|es|s|nouvelle)\)/g, "").replace(/\s*\/\s*/g, ", ou "), { lang: "fr-FR", rate: 1 });
+// Les traductions contiennent « (e) » ou « / » : frSpeech les adapte pour qu'elles soient bien lues.
+const sayFr = (text) => speech.speak(frSpeech(text), { lang: "fr-FR", rate: 0.9, voice: FR_VOICE });
 
 function shuffle(arr) {
   const a = [...arr];

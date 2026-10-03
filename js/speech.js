@@ -50,10 +50,10 @@ export function setClipsEnabled(on) {
 }
 
 // Résout quand la phrase est finie (ou interrompue, ou au bout d'un délai de sécurité).
-// lang : "fr-FR" pour faire parler l'appli en français (mode mains libres, toujours avec la voix de l'appareil).
-// voice : voix IA voulue (ex. celle d'un personnage). device : force la voix de l'appareil.
+// lang : "fr-FR" pour faire parler l'appli en français (mode mains libres).
+// voice : voix IA voulue (ex. celle d'un personnage, ou la voix française). device : force la voix de l'appareil.
 export function speak(text, { rate = 0.9, voiceURI = null, lang = "en-US", voice = MAIN_VOICE, device = false } = {}) {
-  if (clipsEnabled && !device && !/^fr/i.test(lang) && hasClip(voice, text)) {
+  if (clipsEnabled && !device && hasClip(voice, text)) {
     if (hasTTS) speechSynthesis.cancel();
     // La vitesse réglée (0,9 par défaut) correspond au débit normal des enregistrements.
     const clipRate = Math.min(1.5, Math.max(0.5, rate / 0.9));
