@@ -9,6 +9,11 @@ const WORDS = {
   "let's": "let us", whats: "what is", thats: "that is", dont: "do not", im: "i am",
   "i'm": "i am", wassup: "what is up", whassup: "what is up", sup: "what is up",
   goin: "going", wifi: "wi fi", checkout: "check out", checkin: "check in", okay: "ok", nothin: "nothing", gimme: "give me", lemme: "let me", lets: "let us", linkedin: "linked in",
+  // Contractions tapées sans apostrophe (fréquent en dictée). Les deux côtés passent par la même
+  // conversion, donc la comparaison reste juste même pour un vrai mot comme « its ».
+  its: "it is", youre: "you are", theyre: "they are", ive: "i have", youve: "you have", hes: "he is", shes: "she is",
+  doesnt: "does not", didnt: "did not", isnt: "is not", arent: "are not", wasnt: "was not", werent: "were not",
+  couldnt: "could not", wouldnt: "would not", shouldnt: "should not", havent: "have not", hasnt: "has not",
 };
 const NUMBERS = [
   "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
@@ -46,8 +51,40 @@ export function tokens(s) {
   return clean(s).split(/\s+/).filter(Boolean).flatMap(expand);
 }
 
+// Distance d'édition entre deux mots (nombre de lettres à changer, ajouter ou enlever).
+function editDistance(a, b) {
+  const row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return row[b.length];
+}
+
+// Deux lettres voisines inversées (« wya » pour « way »).
+function isSwap(a, b) {
+  if (a.length !== b.length) return false;
+  const diff = [];
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) diff.push(i);
+  return diff.length === 2 && diff[1] === diff[0] + 1 && a[diff[0]] === b[diff[1]] && a[diff[1]] === b[diff[0]];
+}
+
+// En dictée, on tolère une faute de frappe (deux pour les mots longs) et les lettres inversées.
+function fuzzyEqual(a, b) {
+  if (a === b || isSwap(a, b)) return true;
+  if (a.length < 4) return false;
+  return editDistance(a, b) <= (a.length >= 8 ? 2 : 1);
+}
+
 // Renvoie { words: [{ text, ok }], score } où score ∈ [0, 1] = part des mots attendus retrouvés dans l'ordre.
-export function compare(expected, heard) {
+// fuzzy : accepte les petites fautes de frappe (pour la dictée).
+export function compare(expected, heard, { fuzzy = false } = {}) {
+  const eq = fuzzy ? fuzzyEqual : (a, b) => a === b;
   const orig = expected.split(/\s+/).filter(Boolean);
   const exp = [];
   orig.forEach((w, oi) => clean(w).split(/\s+/).filter(Boolean).flatMap(expand).forEach((t) => exp.push({ t, oi, ok: false })));
@@ -56,9 +93,9 @@ export function compare(expected, heard) {
   const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = m - 1; i >= 0; i--)
     for (let j = n - 1; j >= 0; j--)
-      dp[i][j] = exp[i].t === got[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      dp[i][j] = eq(exp[i].t, got[j]) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
   for (let i = 0, j = 0; i < m && j < n; ) {
-    if (exp[i].t === got[j]) { exp[i].ok = true; i++; j++; }
+    if (eq(exp[i].t, got[j])) { exp[i].ok = true; i++; j++; }
     else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
     else j++;
   }

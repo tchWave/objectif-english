@@ -414,3 +414,116 @@ body:has(.screen.dark) { background: #0d0b1c; }
   animation: pop .4s cubic-bezier(.2, 1.4, .4, 1);
 }
 .chapter-done .small { font-weight: 600; margin-top: 4px; }
+
+/* ---------- Phase 2 : exercices variés ---------- */
+.head-actions { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 50%; font-size: 1.25rem;
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.card-sub { text-align: center; font-size: .8rem; color: var(--muted); margin-top: -8px; }
+.card-tag.light { color: var(--muted); }
+.mid-en { font-size: 1.6rem; }
+.big-fr { font-size: 1.25rem; color: var(--text); font-weight: 600; }
+.screen.has-sheet { padding-bottom: 270px; }
+.bottom-actions { padding-top: 6px; }
+
+.play-big {
+  width: 96px; height: 96px; border-radius: 50%; font-size: 2.4rem;
+  background: rgba(255, 255, 255, .1); box-shadow: 0 0 0 10px rgba(255, 255, 255, .04);
+  transition: transform .08s;
+}
+.play-big:active { transform: scale(.94); }
+.play-big.light { background: var(--primary); color: #fff; box-shadow: 0 6px 0 var(--primary-dark), 0 12px 30px rgba(124, 92, 255, .35); }
+
+/* Choix multiples */
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice {
+  width: 100%; text-align: left; padding: 14px 16px; min-height: 56px;
+  border-radius: 16px; font-weight: 600; font-size: 1.02rem; color: var(--text);
+  background: rgba(255, 255, 255, .08); border: 2px solid rgba(255, 255, 255, .14);
+  transition: transform .08s;
+}
+.choice:active { transform: scale(.98); }
+.choice.correct { background: rgba(25, 185, 137, .22); border-color: var(--ok); }
+.choice.wrong { background: rgba(240, 80, 110, .2); border-color: var(--ko); }
+.choice.dim { opacity: .45; }
+.choices.two { flex-direction: row; }
+.choices.two .choice { text-align: center; font-size: 1.5rem; font-weight: 800; min-height: 90px; }
+.choices.light .choice { background: var(--surface); border-color: var(--border); box-shadow: var(--shadow); }
+.choices.light .choice.correct { background: var(--ok-soft); border-color: var(--ok); }
+.choices.light .choice.wrong { background: var(--ko-soft); border-color: var(--ko); }
+
+/* Mots à remettre dans l'ordre */
+.order-body { justify-content: flex-start; padding-top: 24px; }
+.order-answer {
+  width: 100%; min-height: 120px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
+  padding: 12px 0; border-bottom: 2px dashed rgba(255, 255, 255, .2);
+}
+.order-placeholder { color: var(--muted); font-style: italic; margin: auto; }
+.order-bank { width: 100%; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding-top: 18px; }
+.word-chip {
+  background: #fff; color: #17142b; font-weight: 700; font-size: 1.05rem;
+  border-radius: 12px; padding: 9px 14px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35);
+}
+.word-chip:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.word-chip.ghost { background: rgba(255, 255, 255, .1); color: transparent; box-shadow: none; }
+
+/* Dictée */
+.dict-zone { display: flex; flex-direction: column; gap: 12px; }
+.dict-input { background: rgba(255, 255, 255, .08) !important; border-color: rgba(255, 255, 255, .18) !important; color: #fff !important; font-size: 1.1rem !important; }
+
+/* Réponse express : le chrono */
+.timer { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.timer > div { height: 100%; border-radius: 999px; background: var(--mid); transition: width .1s linear; }
+.timer > div.low { background: var(--ko); }
+.timer.stopped > div { opacity: .35; }
+
+/* Sons difficiles */
+.sound-example { font-size: 1.7rem; font-weight: 800; color: var(--primary); }
+.sound-word { font-size: 3.2rem; font-weight: 800; letter-spacing: -.02em; }
+.pair-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+/* Onglet S'entraîner */
+.tiles { display: grid; gap: 12px; }
+.tile {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px;
+}
+.tile:active { background: var(--surface-2); }
+.tile.disabled { opacity: .5; }
+.node-sm {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.locked-row { opacity: .6; }
+.badge-new { background: var(--primary); color: #fff; font-size: .72rem; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.badge-score { background: var(--ok-soft); color: var(--ok-dark); font-size: .78rem; font-weight: 800; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+
+/* Histoires audio */
+.story-player { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0; }
+.chip.on { background: var(--primary); color: #fff; }
+.story-lines { display: flex; flex-direction: column; gap: 8px; }
+.story-line {
+  width: 100%; text-align: left; background: var(--surface); border-radius: 16px; padding: 12px 14px;
+  box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; font-size: 1.02rem; border: 2px solid transparent;
+}
+.story-line.cur { border-color: var(--primary); background: var(--primary-soft); }
+.story-line .tr { font-size: .85rem; color: var(--muted); }
+.hidden-line { color: var(--border); letter-spacing: 2px; }
+.quiz { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+.quiz h2 { font-size: 1.35rem; }
+.bottom-bar.row { display: flex; gap: 10px; }
+.bottom-bar.row .btn3d { flex: 1; }
+
+/* Mode mains libres */
+.hf-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+.hf-ico { font-size: 4.5rem; }
+.hf-ico.live { animation: bob 1s ease-in-out infinite; }
+.hf-label { font-size: 1.45rem; font-weight: 800; }
+.hf-text { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
+.hf-en { font-size: 1.8rem; font-weight: 800; line-height: 1.2; }
+.hf-done { font-size: 1.15rem; font-weight: 700; color: #7ff0c8; }
+.hf-controls { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+label.check.on-dark { color: #e3defa; }
+.btn3d.ghost-dark { --b: rgba(255, 255, 255, .14); --bd: rgba(0, 0, 0, .45); color: #fff; }

@@ -1,7 +1,7 @@
 # Roadmap · Objectif English
 
 Appli perso pour apprendre l'**anglais parlé du quotidien**, sur iPhone.
-Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bis livrée, veille concurrentielle ajoutée).
+Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 2 livrée).
 
 **Notre façon d'avancer :** je code une étape, tu la testes sur ton iPhone pendant quelques jours, tu me dis ce qui coince, on ajuste, puis on passe à l'étape suivante.
 
@@ -49,22 +49,24 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bi
 
 ---
 
-## 🔜 Phase 2 · Des exercices variés et l'écoute (semaine du 12 octobre)
+## ✅ Phase 2 · Des exercices variés et l'écoute (terminée le 3 octobre)
 
 **Pourquoi :** éviter la monotonie, et travailler la difficulté principale des débutants : comprendre les natifs.
 
-- [ ] **« Qu'est-ce qu'il a dit ? »** : une phrase à vitesse normale, tu choisis le bon sens parmi 3 propositions
-- [ ] **Réponse express** : le personnage pose une question, tu réponds en quelques secondes
-- [ ] **Mots à remettre dans l'ordre** : construire la phrase à partir de mots mélangés
-- [ ] **Dictée** : écrire ce que tu entends, pour fixer l'orthographe des expressions
-- [ ] **Sons difficiles pour un francophone** : « th », « h » aspiré, « ship » contre « sheep », etc.
-- [ ] **Histoires audio** (comme les podcasts de Babbel) : de courtes histoires avec nos personnages, à écouter puis à comprendre (« Qu'est-ce qui est arrivé à Sam ? »)
-- [ ] **Révision « Mes points faibles »** (comme Babbel et Duolingo) : une séance avec seulement les phrases que tu rates le plus souvent
-- [ ] **Mode mains libres** (comme l'audio de Speak) : une séance 100 % audio avec des écouteurs, sans regarder l'écran, pour pratiquer en marchant ou dans les transports
-- [ ] Des séances qui **mélangent** automatiquement les types d'exercices
-- [ ] Une difficulté qui **s'adapte** : plus d'écoute si tu rates souvent, des phrases plus longues si tout est facile
+- [x] **« Qu'est-ce qu'il a dit ? »** : une phrase à vitesse normale, tu choisis le bon sens parmi 3 propositions
+- [x] **Réponse express** : le personnage te parle, tu as 8 à 14 secondes (selon ton niveau) pour commencer à répondre
+- [x] **Mots à remettre dans l'ordre** : construire la phrase à partir de mots mélangés
+- [x] **Dictée** : écrire ce que tu entends (les petites fautes de frappe et les apostrophes oubliées sont tolérées)
+- [x] **Sons difficiles pour un francophone** : 5 leçons (TH soufflé, TH vibré, H aspiré, ship/sheep, cat/cut) pour entendre puis prononcer la différence
+- [x] **Histoires audio** (comme les podcasts de Babbel) : 8 histoires, débloquées au fil des situations : de courtes histoires avec nos personnages, à écouter puis à comprendre (« Qu'est-ce qui est arrivé à Sam ? »)
+- [x] **Révision « Mes points faibles »** (comme Babbel et Duolingo) : une séance avec seulement les phrases que tu rates le plus souvent
+- [x] **Mode mains libres** (comme l'audio de Speak) : une séance 100 % audio avec des écouteurs, sans regarder l'écran, pour pratiquer en marchant ou dans les transports
+- [x] Des séances qui **mélangent** automatiquement les types d'exercices, plus une vérification après les nouvelles phrases
+- [x] Une difficulté qui **s'adapte** à tes 30 derniers résultats : plus d'écoute et de choix si tu rates souvent ; dictées, mots en trop, phrases plus longues et chrono plus court si tout va bien
 
-**Terminé quand :** une séance contient au moins 3 types d'exercices différents.
+**Terminé quand :** une séance contient au moins 3 types d'exercices différents. ✓ (jusqu'à 7 dans une même séance)
+
+À vérifier sur iPhone : en mode mains libres, iOS peut refuser de lancer le micro tout seul. L'appli passe alors en mode « écoute et répète », sans vérification.
 
 ---
 
@@ -118,7 +120,7 @@ Après 2 à 3 semaines d'usage régulier, on fait le bilan :
 |---|---|---|
 | Jeux de rôle de la vie réelle, personnages récurrents | Duolingo, Speak, Praktika | ✅ Fait |
 | Révision espacée, séries, notes culturelles | Tous, Babbel | ✅ Fait |
-| Difficulté adaptative, histoires audio, points faibles, mains libres | Duolingo, Babbel, Speak | 🔜 Phase 2 |
+| Difficulté adaptative, histoires audio, points faibles, mains libres | Duolingo, Babbel, Speak | ✅ Fait (phase 2) |
 | Badges, statistiques, niveau estimé | Duolingo, Speak | 🔜 Phase 3 |
 | Conversation libre avec une IA qui se souvient de toi | Duolingo, Speak, Praktika, Memrise | 💡 Phase 4 |
 | Correction de prononciation son par son | ELSA, Speak | ⚠️ Impossible gratuitement : Safari reconnaît les mots, pas les sons |

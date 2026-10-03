@@ -4,26 +4,29 @@ export const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 export const hasTTS = "speechSynthesis" in window;
 
 let voices = [];
+let frVoices = [];
 
 export function englishVoices() {
   return voices;
 }
 
-function rank(v) {
+function rank(v, main) {
   let s = 0;
-  if (/en[-_]US/i.test(v.lang)) s += 2;
+  if (new RegExp(`^${main}`, "i").test(v.lang.replace("_", "-"))) s += 2;
   if (/en[-_]GB/i.test(v.lang)) s += 1;
   if (/enhanced|premium|améliorée/i.test(v.name)) s += 3;
-  if (/samantha|ava|daniel|serena|zoe|evan/i.test(v.name)) s += 1;
+  if (/samantha|ava|daniel|serena|zoe|evan|thomas|amélie|audrey/i.test(v.name)) s += 1;
   return s;
 }
 
 export function initVoices(onChange) {
   if (!hasTTS) return;
   const load = () => {
-    const en = speechSynthesis.getVoices().filter((v) => /^en([-_]|$)/i.test(v.lang));
+    const all = speechSynthesis.getVoices();
+    const en = all.filter((v) => /^en([-_]|$)/i.test(v.lang));
+    frVoices = all.filter((v) => /^fr([-_]|$)/i.test(v.lang)).sort((a, b) => rank(b, "fr-FR") - rank(a, "fr-FR"));
     if (en.length === voices.length) return;
-    voices = en.sort((a, b) => rank(b) - rank(a));
+    voices = en.sort((a, b) => rank(b, "en-US") - rank(a, "en-US"));
     if (onChange) onChange(voices);
   };
   speechSynthesis.onvoiceschanged = load;
@@ -33,13 +36,15 @@ export function initVoices(onChange) {
 }
 
 // Résout quand la phrase est finie (ou interrompue, ou au bout d'un délai de sécurité).
-export function speak(text, { rate = 0.9, voiceURI = null } = {}) {
+// lang: "fr-FR" pour faire parler l'appli en français (mode mains libres).
+export function speak(text, { rate = 0.9, voiceURI = null, lang = "en-US" } = {}) {
   return new Promise((resolve) => {
     if (!hasTTS) return resolve();
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const v = voices.find((x) => x.voiceURI === voiceURI) || voices[0];
-    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "en-US"; }
+    const french = /^fr/i.test(lang);
+    const v = french ? frVoices[0] : voices.find((x) => x.voiceURI === voiceURI) || voices[0];
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = lang; }
     u.rate = rate;
     let done = false;
     const timer = setTimeout(finish, 2000 + (text.length * 110) / rate);

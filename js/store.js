@@ -4,6 +4,8 @@ const KEY = "oe-state-v1";
 // Délai (en jours) avant la prochaine révision, selon la « boîte » de la carte.
 const INTERVALS = [0, 1, 3, 7, 14, 30, 60];
 export const MASTERED_BOX = 4;
+// Nombre de résultats récents pris en compte pour adapter la difficulté.
+const PERF_WINDOW = 30;
 
 export function today(d = new Date()) {
   return d.toLocaleDateString("en-CA");
@@ -21,7 +23,11 @@ function fresh() {
     cards: {},
     situations: {},
     streak: { count: 0, last: null },
+    lastDaily: null,
     days: {},
+    perf: [],
+    stories: {},
+    sounds: {},
     settings: { voice: null, rate: 0.9, autoplay: true },
   };
 }
@@ -55,7 +61,7 @@ export function learn(s, id) {
   if (!s.cards[id]) s.cards[id] = { box: 1, due: addDays(1), ok: 0, ko: 0 };
 }
 
-// success : phrase bien dite. hinted : l'utilisateur a écouté le modèle avant de répondre.
+// success : exercice réussi. hinted : réussi avec aide (ou exercice trop facile pour faire monter la carte).
 export function review(s, id, success, hinted) {
   const c = s.cards[id] || (s.cards[id] = { box: 1, due: today(), ok: 0, ko: 0 });
   if (success && !hinted) {
@@ -89,8 +95,28 @@ export function upcomingIds(s, n) {
     .map(([id]) => id);
 }
 
+// Les phrases souvent ratées : au moins une erreur, et plus d'erreurs que de réussites ou une carte encore basse.
+export function weakIds(s, n) {
+  return Object.entries(s.cards)
+    .filter(([, c]) => c.ko > 0 && (c.box <= 2 || c.ko >= c.ok))
+    .sort((a, b) => (b[1].ko - b[1].ok) - (a[1].ko - a[1].ok) || a[1].box - b[1].box)
+    .slice(0, n)
+    .map(([id]) => id);
+}
+
 export function masteredCount(s) {
   return Object.values(s.cards).filter((c) => c.box >= MASTERED_BOX).length;
+}
+
+// Taux de réussite récent, entre 0 et 1 (0,7 tant qu'il n'y a pas assez de résultats).
+export function recordPerf(s, ok) {
+  s.perf = [...(s.perf || []), ok ? 1 : 0].slice(-PERF_WINDOW);
+}
+
+export function level(s) {
+  const p = s.perf || [];
+  if (p.length < 6) return 0.7;
+  return p.reduce((a, b) => a + b, 0) / p.length;
 }
 
 export function streak(s) {
@@ -99,19 +125,21 @@ export function streak(s) {
 }
 
 export function doneToday(s) {
-  return s.streak.last === today();
+  return s.lastDaily ? s.lastDaily === today() : s.streak.last === today();
 }
 
-export function completeSession(s, stats) {
+// Toute séance terminée compte pour la série ; seule la séance du jour coche « Séance du jour faite ».
+export function completeSession(s, stats, daily = true) {
   const t = today();
   if (s.streak.last !== t) {
     s.streak.count = s.streak.last === addDays(-1) ? s.streak.count + 1 : 1;
     s.streak.last = t;
   }
+  if (daily) s.lastDaily = t;
   const d = s.days[t] || (s.days[t] = { sessions: 0, reviewed: 0, learned: 0 });
   d.sessions++;
-  d.reviewed += stats.reviewed;
-  d.learned += stats.learned;
+  d.reviewed += stats.exercises || 0;
+  d.learned += stats.learned || 0;
 }
 
 export function exportData(s) {

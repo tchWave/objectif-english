@@ -1,5 +1,5 @@
 // Permet à l'appli de fonctionner hors ligne. Réseau d'abord (pour avoir les mises à jour), cache en secours.
-const CACHE = "oe-v4";
+const CACHE = "oe-v5";
 const ASSETS = [
   "./",
   "index.html",
@@ -13,6 +13,7 @@ const ASSETS = [
   "js/sfx.js",
   "js/situations-more.js",
   "js/situations-extra.js",
+  "js/practice-data.js",
   "manifest.webmanifest",
   "icons/icon-180.png",
   "icons/icon-192.png",
