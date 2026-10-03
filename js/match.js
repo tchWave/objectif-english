@@ -8,7 +8,7 @@ const WORDS = {
   "can't": "can not", cant: "can not", cannot: "can not", "won't": "will not", "ain't": "is not",
   "let's": "let us", whats: "what is", thats: "that is", dont: "do not", im: "i am",
   "i'm": "i am", wassup: "what is up", whassup: "what is up", sup: "what is up",
-  goin: "going", wifi: "wi fi", checkout: "check out", checkin: "check in", okay: "ok", nothin: "nothing", gimme: "give me", lemme: "let me", lets: "let us",
+  goin: "going", wifi: "wi fi", checkout: "check out", checkin: "check in", okay: "ok", nothin: "nothing", gimme: "give me", lemme: "let me", lets: "let us", linkedin: "linked in",
 };
 const NUMBERS = [
   "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
@@ -37,7 +37,9 @@ function expand(w) {
 }
 
 function clean(s) {
-  return s.toLowerCase().replace(/[’‘`]/g, "'").replace(/-/g, " ").replace(/[^a-z0-9' ]+/g, " ");
+  return s.toLowerCase()
+    .replace(/\b(?:[a-z]\.){2,}/g, (m) => m.replace(/\./g, "")) // I.D. → id, A.T.M. → atm
+    .replace(/[’‘`]/g, "'").replace(/-/g, " ").replace(/[^a-z0-9' ]+/g, " ");
 }
 
 export function tokens(s) {

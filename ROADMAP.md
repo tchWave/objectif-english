@@ -1,7 +1,7 @@
 # Roadmap · Objectif English
 
 Appli perso pour apprendre l'**anglais parlé du quotidien**, sur iPhone.
-Niveau de départ : débutant (A1-A2). Mise à jour : 2 octobre 2026 (phase 1 livrée).
+Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bis livrée).
 
 **Notre façon d'avancer :** je code une étape, tu la testes sur ton iPhone pendant quelques jours, tu me dis ce qui coince, on ajuste, puis on passe à l'étape suivante.
 
@@ -30,11 +30,22 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 2 octobre 2026 (phase 1 li
   - Les expressions courantes : « I'm beat », « Piece of cake », « Hang on », « Whatever », « I'm starving »…
 - [x] 8 nouveaux personnages (Marcus, Linda, Priya, Dr Ross, Tom, Nina, Diane, Tony), et des anciens qui reviennent (Sam, Chloe, Jake)
 - [x] Relecture complète du contenu (accords, incohérences, nuances d'anglais)
-- [ ] Des **situations sur mesure** selon tes besoins (voyage, travail, séries…) : à me lister
 
 **Terminé quand :** environ 30 situations, de quoi tenir un mois. ✓
 
-**En cours :** tu testes tout. Ensuite, on ajoute le reste du contenu : la banque, les situations sur mesure et les corrections issues de tes tests.
+---
+
+## ✅ Phase 1 bis · Le reste du contenu (terminée le 3 octobre)
+
+- [x] **4 nouveaux chapitres** (8 au total) : Vie pratique, Comme dans les séries, Voyage, Carrière
+- [x] **+13 situations** (43 au total, 344 phrases) :
+  - Vie pratique : supermarché, salle de sport, coiffeur, un problème à signaler (vol, papiers perdus)
+  - Séries : répliques et réactions qu'on entend dans toutes les séries américaines
+  - Voyage : aéroport, dans l'avion, bagage perdu, banque
+  - Carrière : entretien d'embauche, se présenter pro, avec un client (dialogues génériques, sans métier précis)
+- [x] 10 nouveaux personnages (Carla, Jay, Mo, Officer Diaz, Grace, Ben, Daniel, Olivia, Raj, Steve)
+- [x] Reconnaissance vocale : les sigles dictés avec des points (I.D., A.T.M.) et « LinkedIn » sont mieux reconnus
+- [ ] Corrections issues de tes tests sur iPhone (dès que tu me fais tes retours)
 
 ---
 

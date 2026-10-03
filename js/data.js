@@ -5,6 +5,7 @@
 
 // Les personnages qu'on retrouve dans la messagerie. color = teinte de l'avatar.
 import { MORE_CHARACTERS, MORE_SITUATIONS } from "./situations-more.js";
+import { EXTRA_CHARACTERS, EXTRA_SITUATIONS } from "./situations-extra.js";
 
 export const CHARACTERS = {
   jake: { name: "Jake", role: "Ton collègue", emoji: "💼", color: "#4C7DFF" },
@@ -15,6 +16,7 @@ export const CHARACTERS = {
   emma: { name: "Emma", role: "Vendeuse", emoji: "🛍️", color: "#14B8A6" },
   rosa: { name: "Rosa", role: "Une passante", emoji: "🗺️", color: "#22A06B" },
   ...MORE_CHARACTERS,
+  ...EXTRA_CHARACTERS,
 };
 
 const BASE_SITUATIONS = [
@@ -320,13 +322,21 @@ export const CHAPTERS = [
     ids: ["greetings", "understand", "reactions", "meeting", "coffee", "directions", "shopping"] },
   { id: "sortir", emoji: "🚕", title: "Sortir et bouger", desc: "Restos, transports, santé",
     ids: ["plans", "restaurant", "bar", "transport", "hotel", "phone", "pharmacy", "doctor"] },
+  { id: "vie", emoji: "🛒", title: "Vie pratique", desc: "Courses, sport, coiffeur, imprévus",
+    ids: ["supermarket", "gym", "haircut", "emergency"] },
   { id: "discuter", emoji: "💬", title: "Discuter", desc: "Raconter, donner son avis",
     ids: ["weekend", "weather", "hobbies", "opinions", "anecdote", "feelings", "compliments", "jobtalk"] },
+  { id: "series", emoji: "🎬", title: "Comme dans les séries", desc: "Les répliques qu'on entend partout",
+    ids: ["series1", "series2"] },
+  { id: "voyage", emoji: "✈️", title: "Voyage", desc: "Aéroport, avion, banque",
+    ids: ["airport", "plane", "lostbag", "bank"] },
   { id: "boulot", emoji: "🏠", title: "Boulot et maison", desc: "Collègues, coloc, livraisons",
     ids: ["work", "lunch", "videocall", "swamped", "delivery", "chores", "slang"] },
+  { id: "carriere", emoji: "💼", title: "Carrière", desc: "Entretien, réseau, clients",
+    ids: ["interview", "networking", "client"] },
 ];
 
-const ALL = [...BASE_SITUATIONS, ...MORE_SITUATIONS];
+const ALL = [...BASE_SITUATIONS, ...MORE_SITUATIONS, ...EXTRA_SITUATIONS];
 export const SITUATIONS = CHAPTERS.flatMap((ch) =>
   ch.ids.map((id) => ({ ...ALL.find((s) => s.id === id), chapter: ch.id }))
 );
