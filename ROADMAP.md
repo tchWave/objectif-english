@@ -1,7 +1,7 @@
 # Roadmap · Objectif English
 
 Appli perso pour apprendre l'**anglais parlé du quotidien**, sur iPhone.
-Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bis livrée).
+Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bis livrée, veille concurrentielle ajoutée).
 
 **Notre façon d'avancer :** je code une étape, tu la testes sur ton iPhone pendant quelques jours, tu me dis ce qui coince, on ajuste, puis on passe à l'étape suivante.
 
@@ -58,6 +58,9 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bi
 - [ ] **Mots à remettre dans l'ordre** : construire la phrase à partir de mots mélangés
 - [ ] **Dictée** : écrire ce que tu entends, pour fixer l'orthographe des expressions
 - [ ] **Sons difficiles pour un francophone** : « th », « h » aspiré, « ship » contre « sheep », etc.
+- [ ] **Histoires audio** (comme les podcasts de Babbel) : de courtes histoires avec nos personnages, à écouter puis à comprendre (« Qu'est-ce qui est arrivé à Sam ? »)
+- [ ] **Révision « Mes points faibles »** (comme Babbel et Duolingo) : une séance avec seulement les phrases que tu rates le plus souvent
+- [ ] **Mode mains libres** (comme l'audio de Speak) : une séance 100 % audio avec des écouteurs, sans regarder l'écran, pour pratiquer en marchant ou dans les transports
 - [ ] Des séances qui **mélangent** automatiquement les types d'exercices
 - [ ] Une difficulté qui **s'adapte** : plus d'écoute si tu rates souvent, des phrases plus longues si tout est facile
 
@@ -70,6 +73,7 @@ Niveau de départ : débutant (A1-A2). Mise à jour : 3 octobre 2026 (phase 1 bi
 - [ ] **Accueil au premier lancement** : présentation rapide et choix de l'objectif quotidien (5, 10 ou 15 min)
 - [ ] **Badges** : 7 jours d'affilée, 50 puis 100 phrases maîtrisées, tous les personnages débloqués…
 - [ ] **Statistiques** : calendrier des séances, progression semaine par semaine
+- [ ] **Niveau estimé** (comme Speak) : un indicateur A1 → A2 → B1 calculé d'après tes résultats, pour voir ta progression
 - [ ] **Sauvegarde plus simple** (fichier à garder dans l'app Fichiers ou iCloud)
 - [ ] Réglages sons on/off, voix différente pour chaque personnage
 - [ ] Corrections suite à tes retours d'usage
@@ -105,6 +109,20 @@ Après 2 à 3 semaines d'usage régulier, on fait le bilan :
 
 - [ ] Notifications sur iPhone (« Sam t'a écrit ! ») à l'heure que tu choisis
 - [ ] Il faut un petit serveur gratuit (par exemple Cloudflare), avec un compte à créer de ton côté
+
+---
+
+## 🔍 Ce que font les autres applis (veille du 3 octobre)
+
+| Fonctionnalité | Qui la propose | Chez nous |
+|---|---|---|
+| Jeux de rôle de la vie réelle, personnages récurrents | Duolingo, Speak, Praktika | ✅ Fait |
+| Révision espacée, séries, notes culturelles | Tous, Babbel | ✅ Fait |
+| Difficulté adaptative, histoires audio, points faibles, mains libres | Duolingo, Babbel, Speak | 🔜 Phase 2 |
+| Badges, statistiques, niveau estimé | Duolingo, Speak | 🔜 Phase 3 |
+| Conversation libre avec une IA qui se souvient de toi | Duolingo, Speak, Praktika, Memrise | 💡 Phase 4 |
+| Correction de prononciation son par son | ELSA, Speak | ⚠️ Impossible gratuitement : Safari reconnaît les mots, pas les sons |
+| Vidéos de natifs, cours en direct, communauté, ligues | Memrise, Busuu, Duolingo | ❌ Pas adapté à une appli perso |
 
 ---
 
