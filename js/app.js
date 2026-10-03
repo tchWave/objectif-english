@@ -1448,7 +1448,10 @@ function renderSettings() {
       <label for="rateRange">Vitesse : <span id="rateVal">${state.settings.rate}</span></label>
       <input type="range" id="rateRange" min="0.5" max="1.2" step="0.05" value="${state.settings.rate}">
       <label class="check"><input type="checkbox" id="autoplay" ${state.settings.autoplay ? "checked" : ""}> Lire les phrases automatiquement</label>
-      <button class="chip" data-a="say" data-text="Hey, what's up? This is how I sound.">🔊 Tester la voix</button>
+      <div class="row">
+        <button class="chip" data-a="say" data-text="Hey, what's up? This is how I sound.">🔊 Tester la voix</button>
+        <a class="chip" href="voix.html">🎧 Écouter les voix IA</a>
+      </div>
       <p class="muted small">Pour une voix plus naturelle : Réglages iPhone → Accessibilité → Contenu énoncé → Voix → Anglais, puis télécharge une voix « améliorée ».</p>
     </section>
     <section class="panel">
