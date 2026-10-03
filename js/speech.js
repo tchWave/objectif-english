@@ -16,13 +16,19 @@ function rank(v, main) {
   if (/en[-_]GB/i.test(v.lang)) s += 1;
   if (/enhanced|premium|améliorée/i.test(v.name)) s += 3;
   if (/samantha|ava|daniel|serena|zoe|evan|thomas|amélie|audrey/i.test(v.name)) s += 1;
+  if (/eloquence/i.test(v.voiceURI)) s -= 2; // voix Eloquence (Flo, Rocko…) : compréhensibles mais robotiques
   return s;
 }
+
+// Voix « fantaisie » d'Apple (Bulles, Superstar, Zarvox…) et vieilles voix robotiques : inutilisables pour apprendre.
+// Leur nom est traduit selon la langue de l'iPhone, d'où les noms en anglais et en français.
+const NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|princess|fred|junior|kathy|ralph|mauvaises nouvelles|bonnes nouvelles|cloches|bulles|violoncelles|bouffon|orgue|trinoïdes|murmure)$/i;
+const usable = (v) => !/speech\.synthesis\.voice\./i.test(v.voiceURI) && !NOVELTY.test(v.name.trim());
 
 export function initVoices(onChange) {
   if (!hasTTS) return;
   const load = () => {
-    const all = speechSynthesis.getVoices();
+    const all = speechSynthesis.getVoices().filter(usable);
     const en = all.filter((v) => /^en([-_]|$)/i.test(v.lang));
     frVoices = all.filter((v) => /^fr([-_]|$)/i.test(v.lang)).sort((a, b) => rank(b, "fr-FR") - rank(a, "fr-FR"));
     if (en.length === voices.length) return;

@@ -1432,7 +1432,9 @@ function releaseWake() {
 // ---------- Réglages ----------
 function renderSettings() {
   const voices = speech.englishVoices();
-  const current = state.settings.voice || (voices[0] && voices[0].voiceURI);
+  // Si la voix enregistrée n'est plus proposée (ex. une voix « fantaisie » retirée), on affiche celle utilisée à la place.
+  const saved = voices.find((v) => v.voiceURI === state.settings.voice);
+  const current = saved ? saved.voiceURI : voices[0] && voices[0].voiceURI;
   return `
   <div class="screen">
     <header class="home-head">
